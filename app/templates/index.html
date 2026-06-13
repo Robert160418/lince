@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Joya de la Corona</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="page-container">
+    <header class="hero">
+      <div>
+        <h1>Joya de la Corona</h1>
+        <p>Control visual de tu pipeline de leads y email marketing.</p>
+      </div>
+      <div class="status-pill" id="app-status">Cargando estado...</div>
+    </header>
+
+    <section class="intro-card">
+      <p>Esta interfaz te permite ejecutar los pipelines disponibles y ver los resultados sin usar la terminal.</p>
+      <div class="button-group">
+        <button onclick="loadStatus()">Ver estado</button>
+        <button onclick="fetchJson('/debug')">Debug</button>
+        <button onclick="fetchJson('/test-db')">Test DB</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>P1 - Scraping Google Maps</h2>
+        <p>Busca negocios y guarda leads en Supabase.</p>
+        <label>Consulta</label>
+        <input id="p1-query" placeholder="restaurantes Ciudad de México" />
+        <label>Límite</label>
+        <input id="p1-limit" type="number" value="20" />
+        <button onclick="runPipeline('/pipeline/p1', { query: getValue('p1-query'), limit: Number(getValue('p1-limit')) }, data => setLeads(data.leads))">Ejecutar P1</button>
+      </article>
+
+      <article class="card">
+        <h2>Lead seleccionado</h2>
+        <label>Selecciona un lead</label>
+        <select id="lead-select" onchange="selectLead(this.value)">
+          <option value="">-- elige un lead --</option>
+        </select>
+        <p id="lead-summary" class="lead-summary">Ningún lead seleccionado.</p>
+        <label>URL para P3</label>
+        <input id="workflow-url" placeholder="https://ejemplo.com" />
+        <button onclick="runFullWorkflow()">Ejecutar secuencia P2-P5</button>
+      </article>
+
+      <article class="card">
+        <h2>P2 - Obtener Reviews</h2>
+        <label>place_id</label>
+        <input id="p2-place_id" placeholder="ChIJ..." />
+        <label>Max reviews</label>
+        <input id="p2-max_reviews" type="number" value="10" />
+        <button onclick="runPipeline('/pipeline/p2', { place_id: getValue('p2-place_id'), max_reviews: Number(getValue('p2-max_reviews')) })">Ejecutar P2</button>
+      </article>
+
+      <article class="card">
+        <h2>P3 - Analizar Sitio</h2>
+        <label>place_id</label>
+        <input id="p3-place_id" placeholder="ChIJ..." />
+        <label>URL</label>
+        <input id="p3-url" placeholder="https://ejemplo.com" />
+        <button onclick="runPipeline('/pipeline/p3', { place_id: getValue('p3-place_id'), url: getValue('p3-url') })">Ejecutar P3</button>
+      </article>
+
+      <article class="card">
+        <h2>P4 - Generar Keypoints</h2>
+        <label>place_id</label>
+        <input id="p4-place_id" placeholder="ChIJ..." />
+        <button onclick="runPipeline('/pipeline/p4', { place_id: getValue('p4-place_id') })">Ejecutar P4</button>
+      </article>
+
+      <article class="card">
+        <h2>P5 - Generar Emails</h2>
+        <label>place_id</label>
+        <input id="p5-place_id" placeholder="ChIJ..." />
+        <button onclick="runPipeline('/pipeline/p5', { place_id: getValue('p5-place_id') })">Ejecutar P5</button>
+      </article>
+
+      <article class="card">
+        <h2>P6 - Enviar Email</h2>
+        <label>place_id</label>
+        <input id="p6-place_id" placeholder="ChIJ..." />
+        <label>Destino (email)</label>
+        <input id="p6-to_email" placeholder="cliente@ejemplo.com" />
+        <label>Destino (nombre)</label>
+        <input id="p6-to_name" placeholder="Juan Pérez" />
+        <button onclick="runPipeline('/pipeline/p6', { place_id: getValue('p6-place_id'), to_email: getValue('p6-to_email'), to_name: getValue('p6-to_name') })">Ejecutar P6</button>
+      </article>
+    </section>
+
+    <section class="output-card">
+      <h2>Resultado</h2>
+      <pre id="output">Usa los botones para ejecutar los pipelines.</pre>
+    </section>
+  </div>
+
+  <script>
+    window.leads = [];
+
+    function getValue(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function setLeads(leads) {
+      window.leads = leads || [];
+      const select = document.getElementById('lead-select');
+      select.innerHTML = '<option value="">-- elige un lead --</option>';
+      window.leads.forEach(lead => {
+        const option = document.createElement('option');
+        option.value = lead.place_id;
+        option.textContent = `${lead.name || lead.place_id} (${lead.rating ? lead.rating + '★' : 'sin rating'})`;
+        select.appendChild(option);
+      });
+      document.getElementById('lead-summary').textContent = window.leads.length
+        ? `${window.leads.length} lead(s) disponibles`
+        : 'No se encontraron leads';
+      if (window.leads.length && window.leads[0].site) {
+        document.getElementById('workflow-url').value = window.leads[0].site;
+      }
+    }
+
+    function selectLead(place_id) {
+      const lead = window.leads.find(item => item.place_id === place_id);
+      const summary = document.getElementById('lead-summary');
+      if (!lead) {
+        summary.textContent = 'Ningún lead seleccionado.';
+        return;
+      }
+      summary.textContent = `Seleccionado: ${lead.name || lead.place_id} • ${lead.full_address || 'sin dirección'} • ${lead.site || 'sin sitio'}`;
+      if (lead.site) {
+        document.getElementById('workflow-url').value = lead.site;
+      }
+    }
+
+    async function fetchJson(path) {
+      try {
+        const response = await fetch(path);
+        const data = await response.json();
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById('output').textContent = 'Error: ' + error;
+      }
+    }
+
+    async function runPipeline(path, body, callback) {
+      document.getElementById('output').textContent = 'Ejecutando ' + path + '...';
+      try {
+        const response = await fetch(path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await response.json();
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+        if (callback) {
+          callback(data);
+        }
+        return data;
+      } catch (error) {
+        document.getElementById('output').textContent = 'Error: ' + error;
+        return null;
+      }
+    }
+
+    async function runFullWorkflow() {
+      const place_id = document.getElementById('lead-select').value;
+      const url = getValue('workflow-url');
+      if (!place_id) {
+        document.getElementById('output').textContent = 'Selecciona un lead antes de ejecutar la secuencia completa.';
+        return;
+      }
+      if (!url) {
+        document.getElementById('output').textContent = 'Ingresa una URL válida para ejecutar P3.';
+        return;
+      }
+
+      document.getElementById('output').textContent = 'Ejecutando secuencia completa...';
+      const result = await runPipeline('/pipeline/sequence', { place_id, url, max_reviews: Number(getValue('p2-max_reviews')) });
+      if (result) {
+        document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+      }
+    }
+
+    async function loadStatus() {
+      try {
+        const response = await fetch('/health');
+        const data = await response.json();
+        document.getElementById('app-status').textContent = 'Estado: ' + data.status;
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById('app-status').textContent = 'Estado: error';
+        document.getElementById('output').textContent = 'Error: ' + error;
+      }
+    }
+
+    loadStatus();
+  </script>
+</body>
+</html>

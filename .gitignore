@@ -1,0 +1,19 @@
+# Secretos - NUNCA subir al repositorio
+.env
+*.env
+credentials*.json
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Node (informes/documentos generados)
+node_modules/
