@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from app.config import SUPABASE_URL, SUPABASE_KEY
 from app.utils.supabase_client import supabase_select
 from app.pipelines.p1_google_maps import scrape_google_maps, procesar_y_guardar_leads
+from app.utils.batch_processor import process_lote
 from app.pipelines.p2_reviews import obtener_reviews, procesar_y_guardar_reviews
 from app.pipelines.p3_website_analysis import scrape_website, analizar_y_guardar
 from app.pipelines.p4_keypoints import generar_keypoints
@@ -32,7 +33,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Servir la interfaz web
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 
@@ -40,8 +40,6 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 async def index():
     return FileResponse(BASE_DIR / "templates" / "index.html")
 
-
-# ----- Modelos de entrada (campo unificado: place_id) -----
 
 class P1Body(BaseModel):
     query: str
@@ -71,8 +69,9 @@ class SequenceBody(BaseModel):
     url: str
     max_reviews: int = 5
 
+class BatchBody(BaseModel):
+    lote_id: str
 
-# ----- Endpoints generales -----
 
 @app.get("/leads")
 async def get_leads():
@@ -97,7 +96,6 @@ async def health():
 
 @app.get("/debug")
 async def debug():
-    # No exponer secretos: solo indicar si la configuración está cargada
     return {
         "supabase_url": SUPABASE_URL,
         "supabase_key_primeros_10": "configurada" if SUPABASE_KEY else None,
@@ -113,16 +111,34 @@ async def test_db():
         return {"error": str(e)}
 
 
-# ----- Pipelines -----
+@app.get("/lotes")
+async def get_lotes():
+    leads = await supabase_select("leads")
+    lotes: dict = {}
+    for lead in leads:
+        lid = lead.get("lote_id") or "sin_lote"
+        if lid not in lotes:
+            lotes[lid] = {"lote_id": lid, "query": lead.get("query", ""), "count": 0, "place_ids": []}
+        lotes[lid]["count"] += 1
+        lotes[lid]["place_ids"].append(lead.get("place_id", ""))
+    return sorted(lotes.values(), key=lambda x: x["lote_id"], reverse=True)
+
+
+@app.post("/pipeline/batch")
+async def ejecutar_batch(body: BatchBody):
+    resultado = await process_lote(body.lote_id)
+    return resultado
+
 
 @app.post("/pipeline/p1")
 async def ejecutar_p1(body: P1Body):
     resultados = await scrape_google_maps(query=body.query, limit=body.limit)
-    guardados = await procesar_y_guardar_leads(resultados, query=body.query)
+    resultado = await procesar_y_guardar_leads(resultados, query=body.query)
     return {
         "status": "ok",
         "encontrados": len(resultados),
-        "guardados": guardados,
+        "guardados": resultado.get("guardados", 0) if isinstance(resultado, dict) else resultado,
+        "lote_id": resultado.get("lote_id", "") if isinstance(resultado, dict) else "",
         "leads": resultados,
     }
 
@@ -131,12 +147,7 @@ async def ejecutar_p1(body: P1Body):
 async def ejecutar_p2(body: P2Body):
     reviews = await obtener_reviews(place_id=body.place_id, max_reviews=body.max_reviews)
     guardadas = await procesar_y_guardar_reviews(body.place_id, reviews)
-    return {
-        "status": "ok",
-        "place_id": body.place_id,
-        "reviews_encontradas": len(reviews),
-        "reviews_guardadas": guardadas,
-    }
+    return {"status": "ok", "place_id": body.place_id, "reviews_encontradas": len(reviews), "reviews_guardadas": guardadas}
 
 
 @app.post("/pipeline/p3")
@@ -165,7 +176,6 @@ async def ejecutar_p5(body: P5Body):
 
 @app.post("/pipeline/p6")
 async def ejecutar_p6(body: P6Body):
-    # Si se indica un destinatario, registrarlo antes de enviar
     if body.to_email:
         await set_recipient_email(body.place_id, body.to_email)
     resultado = await ejecutar_secuencia(body.place_id)
@@ -176,25 +186,18 @@ async def ejecutar_p6(body: P6Body):
 
 @app.post("/pipeline/sequence")
 async def ejecutar_secuencia_completa(body: SequenceBody):
-    """Ejecuta P2 -> P3 -> P4 -> P5 en cadena para un lead."""
     salida = {"status": "ok", "place_id": body.place_id}
-
-    # P2: reviews
     try:
         reviews = await obtener_reviews(place_id=body.place_id, max_reviews=body.max_reviews)
         guardadas = await procesar_y_guardar_reviews(body.place_id, reviews)
         salida["p2"] = {"status": "ok", "reviews_encontradas": len(reviews), "reviews_guardadas": guardadas}
     except Exception as e:
         salida["p2"] = {"status": "error", "error": str(e)}
-
-    # P3: análisis del sitio web
     try:
         datos = await analizar_y_guardar(place_id=body.place_id, url=body.url)
         salida["p3"] = {"status": "ok", "resultado": datos}
     except Exception as e:
         salida["p3"] = {"status": "error", "error": str(e)}
-
-    # P4: keypoints con IA
     try:
         kp = await generar_keypoints(body.place_id)
         if kp.get("error"):
@@ -203,8 +206,6 @@ async def ejecutar_secuencia_completa(body: SequenceBody):
             salida["p4"] = {"status": "ok", "resultado": kp}
     except Exception as e:
         salida["p4"] = {"status": "error", "error": str(e)}
-
-    # P5: secuencia de emails con IA
     try:
         em = await generar_secuencia_emails(body.place_id)
         if em.get("error"):
@@ -214,5 +215,4 @@ async def ejecutar_secuencia_completa(body: SequenceBody):
             salida["p5"] = {"status": "ok", "emails_generados": len(emails), "emails": emails}
     except Exception as e:
         salida["p5"] = {"status": "error", "error": str(e)}
-
     return salida
