@@ -708,7 +708,9 @@ function modalNext() {
 function fillSelector(leads) {
   _leads = leads || [];
   // Últimos 5 para el historial de las cards
-  const recent = _leads.slice(0, 5);
+  const recent = [..._leads]
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+    .slice(0, 5);
   const opts = '<option value="">— elige un lead —</option>' +
     recent.map(l =>
       `<option value="${l.place_id}">${l.name || l.place_id}${l.rating ? ' · ' + l.rating + '★' : ''}</option>`
