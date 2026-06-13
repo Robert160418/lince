@@ -22,7 +22,7 @@ from app.pipelines.p5_email_generator import generar_secuencia_emails
 from app.pipelines.p6_email_sender import ejecutar_secuencia
 
 BASE_DIR = Path(__file__).resolve().parent
-app = FastAPI(title="Joya de la Corona API")
+app = FastAPI(title="Lince API")
 
 app.add_middleware(
     CORSMiddleware,

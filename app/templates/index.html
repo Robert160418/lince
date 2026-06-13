@@ -3,201 +3,529 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Joya de la Corona</title>
-  <link rel="stylesheet" href="/static/styles.css" />
+  <title>Lince — Pipeline de Leads</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #070c1a;
+      --surface: rgba(13, 20, 40, 0.9);
+      --surface2: rgba(20, 30, 58, 0.7);
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(99,179,237,0.3);
+      --text: #e8edf5;
+      --muted: #7a8ba8;
+      --accent: #3b82f6;
+      --accent2: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --gradient: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59,130,246,0.12), transparent),
+        radial-gradient(ellipse 40% 40% at 80% 60%, rgba(6,182,212,0.05), transparent);
+    }
+
+    .layout {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      margin-bottom: 24px;
+    }
+    .header-brand { display: flex; align-items: center; gap: 14px; }
+    .logo {
+      width: 44px; height: 44px;
+      background: var(--gradient);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 800; color: #fff;
+    }
+    .header h1 { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em; }
+    .header p { font-size: 0.84rem; color: var(--muted); margin-top: 3px; }
+
+    .status-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.2);
+      font-size: 0.82rem; font-weight: 600;
+      color: var(--success);
+      white-space: nowrap;
+    }
+    .status-badge.loading { color: var(--accent2); background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.2); }
+    .status-badge.error { color: var(--error); background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* QUICK BAR */
+    .quick-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+    .btn-ghost {
+      padding: 9px 18px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--muted); font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; transition: all 0.18s; font-family: inherit;
+    }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); background: var(--surface2); }
+
+    /* MAIN GRID */
+    .main-grid { display: grid; grid-template-columns: 1fr 370px; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+    .section-title {
+      font-size: 0.73rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--muted); margin-bottom: 14px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+
+    /* PIPELINE CARDS */
+    .pipeline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 22px; transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--border-hover); }
+
+    .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .pipe-badge {
+      padding: 4px 9px; border-radius: 6px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em;
+      background: var(--gradient); color: #fff;
+    }
+    .card h3 { font-size: 0.94rem; font-weight: 600; }
+
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block; font-size: 0.76rem; font-weight: 600;
+      color: var(--muted); margin-bottom: 5px;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .field input, .field select {
+      width: 100%; padding: 10px 13px; border-radius: 10px;
+      border: 1px solid var(--border); background: rgba(7,12,26,0.7);
+      color: var(--text); font-size: 0.88rem; font-family: inherit;
+      transition: border-color 0.18s; outline: none;
+    }
+    .field input:focus, .field select:focus { border-color: var(--accent); }
+    .field input::placeholder { color: var(--muted); opacity: 0.55; }
+
+    .btn-run {
+      width: 100%; margin-top: 14px; padding: 12px; border: none;
+      border-radius: 12px; background: var(--gradient); color: #fff;
+      font-size: 0.88rem; font-weight: 700; cursor: pointer;
+      transition: opacity 0.18s, transform 0.15s; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-run:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
+    .btn-run:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .spinner {
+      width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.6s linear infinite; display: none;
+    }
+    .btn-run.running .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* RIGHT PANEL */
+    .right-panel { display: flex; flex-direction: column; gap: 16px; }
+    .panel-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 22px;
+    }
+    .panel-card h3 {
+      font-size: 0.73rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--muted); margin-bottom: 14px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+
+    .lead-info { font-size: 0.86rem; line-height: 1.7; color: var(--muted); }
+    .lead-info strong { color: var(--text); display: block; font-size: 0.96rem; margin-bottom: 4px; }
+    .tag {
+      display: inline-block; padding: 2px 8px; border-radius: 5px;
+      background: rgba(59,130,246,0.12); color: var(--accent);
+      font-size: 0.74rem; margin: 2px 2px 0 0;
+    }
+
+    .btn-sequence {
+      width: 100%; margin-top: 14px; padding: 13px; border: none;
+      border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      color: #fff; font-size: 0.9rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.18s, transform 0.15s; font-family: inherit;
+    }
+    .btn-sequence:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* OUTPUT */
+    .output-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; margin-top: 20px; overflow: hidden;
+    }
+    .output-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 20px; border-bottom: 1px solid var(--border);
+      font-size: 0.82rem; font-weight: 600; color: var(--muted);
+    }
+    .clear-btn {
+      padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 0.75rem;
+      cursor: pointer; font-family: inherit;
+    }
+    .clear-btn:hover { color: var(--text); }
+    #output {
+      padding: 18px 22px; font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.8rem; line-height: 1.65; color: #a5f3fc;
+      max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+    }
+    #output.placeholder { color: var(--muted); font-family: inherit; font-size: 0.88rem; }
+
+    /* TOASTS */
+    #toast-area {
+      position: fixed; bottom: 22px; right: 22px;
+      display: flex; flex-direction: column; gap: 8px; z-index: 999;
+    }
+    .toast {
+      padding: 11px 18px; border-radius: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-size: 0.84rem; max-width: 320px;
+      animation: slideUp 0.22s ease;
+    }
+    .toast.ok  { border-color: rgba(16,185,129,0.4); }
+    .toast.err { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  </style>
 </head>
 <body>
-  <div class="page-container">
-    <header class="hero">
+
+<div class="layout">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="logo">🐆</div>
       <div>
-        <h1>Joya de la Corona</h1>
-        <p>Control visual de tu pipeline de leads y email marketing.</p>
+        <h1>Lince</h1>
+        <p>Pipeline de leads automatizado · P1 → P6</p>
       </div>
-      <div class="status-pill" id="app-status">Cargando estado...</div>
-    </header>
+    </div>
+    <div class="status-badge loading" id="status-badge">
+      <span class="dot"></span>
+      <span id="status-text">Conectando...</span>
+    </div>
+  </header>
 
-    <section class="intro-card">
-      <p>Esta interfaz te permite ejecutar los pipelines disponibles y ver los resultados sin usar la terminal.</p>
-      <div class="button-group">
-        <button onclick="loadStatus()">Ver estado</button>
-        <button onclick="fetchJson('/debug')">Debug</button>
-        <button onclick="fetchJson('/test-db')">Test DB</button>
-      </div>
-    </section>
-
-    <section class="grid">
-      <article class="card">
-        <h2>P1 - Scraping Google Maps</h2>
-        <p>Busca negocios y guarda leads en Supabase.</p>
-        <label>Consulta</label>
-        <input id="p1-query" placeholder="restaurantes Ciudad de México" />
-        <label>Límite</label>
-        <input id="p1-limit" type="number" value="20" />
-        <button onclick="runPipeline('/pipeline/p1', { query: getValue('p1-query'), limit: Number(getValue('p1-limit')) }, data => setLeads(data.leads))">Ejecutar P1</button>
-      </article>
-
-      <article class="card">
-        <h2>Lead seleccionado</h2>
-        <label>Selecciona un lead</label>
-        <select id="lead-select" onchange="selectLead(this.value)">
-          <option value="">-- elige un lead --</option>
-        </select>
-        <p id="lead-summary" class="lead-summary">Ningún lead seleccionado.</p>
-        <label>URL para P3</label>
-        <input id="workflow-url" placeholder="https://ejemplo.com" />
-        <button onclick="runFullWorkflow()">Ejecutar secuencia P2-P5</button>
-      </article>
-
-      <article class="card">
-        <h2>P2 - Obtener Reviews</h2>
-        <label>place_id</label>
-        <input id="p2-place_id" placeholder="ChIJ..." />
-        <label>Max reviews</label>
-        <input id="p2-max_reviews" type="number" value="10" />
-        <button onclick="runPipeline('/pipeline/p2', { place_id: getValue('p2-place_id'), max_reviews: Number(getValue('p2-max_reviews')) })">Ejecutar P2</button>
-      </article>
-
-      <article class="card">
-        <h2>P3 - Analizar Sitio</h2>
-        <label>place_id</label>
-        <input id="p3-place_id" placeholder="ChIJ..." />
-        <label>URL</label>
-        <input id="p3-url" placeholder="https://ejemplo.com" />
-        <button onclick="runPipeline('/pipeline/p3', { place_id: getValue('p3-place_id'), url: getValue('p3-url') })">Ejecutar P3</button>
-      </article>
-
-      <article class="card">
-        <h2>P4 - Generar Keypoints</h2>
-        <label>place_id</label>
-        <input id="p4-place_id" placeholder="ChIJ..." />
-        <button onclick="runPipeline('/pipeline/p4', { place_id: getValue('p4-place_id') })">Ejecutar P4</button>
-      </article>
-
-      <article class="card">
-        <h2>P5 - Generar Emails</h2>
-        <label>place_id</label>
-        <input id="p5-place_id" placeholder="ChIJ..." />
-        <button onclick="runPipeline('/pipeline/p5', { place_id: getValue('p5-place_id') })">Ejecutar P5</button>
-      </article>
-
-      <article class="card">
-        <h2>P6 - Enviar Email</h2>
-        <label>place_id</label>
-        <input id="p6-place_id" placeholder="ChIJ..." />
-        <label>Destino (email)</label>
-        <input id="p6-to_email" placeholder="cliente@ejemplo.com" />
-        <label>Destino (nombre)</label>
-        <input id="p6-to_name" placeholder="Juan Pérez" />
-        <button onclick="runPipeline('/pipeline/p6', { place_id: getValue('p6-place_id'), to_email: getValue('p6-to_email'), to_name: getValue('p6-to_name') })">Ejecutar P6</button>
-      </article>
-    </section>
-
-    <section class="output-card">
-      <h2>Resultado</h2>
-      <pre id="output">Usa los botones para ejecutar los pipelines.</pre>
-    </section>
+  <!-- QUICK BAR -->
+  <div class="quick-bar">
+    <button class="btn-ghost" onclick="checkHealth()">⚡ Estado</button>
+    <button class="btn-ghost" onclick="fetchAndShow('/leads')">📋 Todos los leads</button>
+    <button class="btn-ghost" onclick="fetchAndShow('/test-db')">🔌 Test DB</button>
+    <button class="btn-ghost" onclick="fetchAndShow('/debug')">🔧 Debug</button>
+    <button class="btn-ghost" onclick="clearOutput()">🗑 Limpiar</button>
   </div>
 
-  <script>
-    window.leads = [];
+  <!-- MAIN GRID -->
+  <div class="main-grid">
 
-    function getValue(id) {
-      return document.getElementById(id).value.trim();
+    <!-- LEFT: PIPELINES -->
+    <div>
+      <div class="section-title">Pipelines</div>
+      <div class="pipeline-grid">
+
+        <!-- P1 -->
+        <div class="card">
+          <div class="card-head"><span class="pipe-badge">P1</span><h3>Scraping Google Maps</h3></div>
+          <div class="field">
+            <label>Búsqueda</label>
+            <input id="p1-query" placeholder="restaurantes Ciudad de México" />
+          </div>
+          <div class="field">
+            <label>Límite</label>
+            <input id="p1-limit" type="number" value="20" min="1" max="100" />
+          </div>
+          <button class="btn-run" id="btn-p1" onclick="runP1()">
+            <span class="spinner"></span><span>Ejecutar P1</span>
+          </button>
+        </div>
+
+        <!-- P2 -->
+        <div class="card">
+          <div class="card-head"><span class="pipe-badge">P2</span><h3>Obtener Reviews</h3></div>
+          <div class="field"><label>place_id</label><input id="p2-place_id" placeholder="ChIJ..." /></div>
+          <div class="field"><label>Máx. reviews</label><input id="p2-max_reviews" type="number" value="10" /></div>
+          <button class="btn-run" id="btn-p2" onclick="runPL('p2',{place_id:v('p2-place_id'),max_reviews:n('p2-max_reviews')})">
+            <span class="spinner"></span><span>Ejecutar P2</span>
+          </button>
+        </div>
+
+        <!-- P3 -->
+        <div class="card">
+          <div class="card-head"><span class="pipe-badge">P3</span><h3>Analizar Sitio Web</h3></div>
+          <div class="field"><label>place_id</label><input id="p3-place_id" placeholder="ChIJ..." /></div>
+          <div class="field"><label>URL del sitio</label><input id="p3-url" placeholder="https://ejemplo.com" /></div>
+          <button class="btn-run" id="btn-p3" onclick="runPL('p3',{place_id:v('p3-place_id'),url:v('p3-url')})">
+            <span class="spinner"></span><span>Ejecutar P3</span>
+          </button>
+        </div>
+
+        <!-- P4 -->
+        <div class="card">
+          <div class="card-head"><span class="pipe-badge">P4</span><h3>Generar Keypoints IA</h3></div>
+          <div class="field"><label>place_id</label><input id="p4-place_id" placeholder="ChIJ..." /></div>
+          <button class="btn-run" id="btn-p4" onclick="runPL('p4',{place_id:v('p4-place_id')})">
+            <span class="spinner"></span><span>Ejecutar P4</span>
+          </button>
+        </div>
+
+        <!-- P5 -->
+        <div class="card">
+          <div class="card-head"><span class="pipe-badge">P5</span><h3>Generar Emails IA</h3></div>
+          <div class="field"><label>place_id</label><input id="p5-place_id" placeholder="ChIJ..." /></div>
+          <button class="btn-run" id="btn-p5" onclick="runPL('p5',{place_id:v('p5-place_id')})">
+            <span class="spinner"></span><span>Ejecutar P5</span>
+          </button>
+        </div>
+
+        <!-- P6 -->
+        <div class="card">
+          <div class="card-head"><span class="pipe-badge">P6</span><h3>Enviar Email</h3></div>
+          <div class="field"><label>place_id</label><input id="p6-place_id" placeholder="ChIJ..." /></div>
+          <div class="field"><label>Email destinatario</label><input id="p6-to_email" type="email" placeholder="cliente@ejemplo.com" /></div>
+          <div class="field"><label>Nombre destinatario</label><input id="p6-to_name" placeholder="Juan Pérez" /></div>
+          <button class="btn-run" id="btn-p6" onclick="runPL('p6',{place_id:v('p6-place_id'),to_email:v('p6-to_email'),to_name:v('p6-to_name')})">
+            <span class="spinner"></span><span>Enviar email</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+
+      <div class="panel-card">
+        <h3>Lead activo</h3>
+        <div class="field">
+          <label>Seleccionar lead</label>
+          <select id="lead-select" onchange="selectLead(this.value)">
+            <option value="">— ejecuta P1 para cargar leads —</option>
+          </select>
+        </div>
+        <div class="lead-info" id="lead-info"><em>Sin lead seleccionado</em></div>
+        <div class="field" style="margin-top:14px">
+          <label>URL para P3 / Secuencia</label>
+          <input id="workflow-url" placeholder="https://ejemplo.com" />
+        </div>
+        <button class="btn-sequence" onclick="runSequence()">⚡ Ejecutar secuencia P2 → P5</button>
+      </div>
+
+      <div class="panel-card">
+        <h3>Sistema</h3>
+        <div class="lead-info" id="sys-stats"><em>Cargando...</em></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-card">
+    <div class="output-head">
+      <span>📟 Resultado</span>
+      <button class="clear-btn" onclick="clearOutput()">Limpiar</button>
+    </div>
+    <pre id="output" class="placeholder">Usa los botones para ejecutar los pipelines.</pre>
+  </div>
+
+</div>
+<div id="toast-area"></div>
+
+<script>
+  const v  = id => (document.getElementById(id)?.value?.trim() || '');
+  const n  = id => Number(document.getElementById(id)?.value) || 0;
+  const $  = id => document.getElementById(id);
+
+  let _leads = [];
+
+  /* ── OUTPUT ── */
+  function setOutput(data) {
+    const el = $('output');
+    el.classList.remove('placeholder');
+    el.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  }
+  function clearOutput() {
+    const el = $('output');
+    el.classList.add('placeholder');
+    el.textContent = 'Usa los botones para ejecutar los pipelines.';
+  }
+
+  /* ── TOAST ── */
+  function toast(msg, type) {
+    const area = $('toast-area');
+    const t = document.createElement('div');
+    t.className = 'toast ' + (type === 'ok' ? 'ok' : 'err');
+    t.textContent = msg;
+    area.appendChild(t);
+    setTimeout(() => t.remove(), 3800);
+  }
+
+  /* ── BUTTON STATE ── */
+  function setBusy(id, busy) {
+    const b = $(id);
+    if (!b) return;
+    b.disabled = busy;
+    b.classList.toggle('running', busy);
+  }
+
+  /* ── API ── */
+  async function api(path, body) {
+    const opts = body
+      ? { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) }
+      : { method: 'GET' };
+    const r = await fetch(path, opts);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+
+  async function fetchAndShow(path) {
+    setOutput('Cargando ' + path + '...');
+    try { setOutput(await api(path)); }
+    catch(e) { setOutput('Error: ' + e.message); toast(e.message, 'err'); }
+  }
+
+  /* ── CHECK HEALTH ── */
+  async function checkHealth() {
+    try {
+      const d = await api('/health');
+      $('status-badge').className = 'status-badge';
+      $('status-text').textContent = 'API online';
+      setOutput(d);
+    } catch(e) {
+      $('status-badge').className = 'status-badge error';
+      $('status-text').textContent = 'Sin conexión';
+      setOutput('Error: ' + e.message);
     }
+  }
 
-    function setLeads(leads) {
-      window.leads = leads || [];
-      const select = document.getElementById('lead-select');
-      select.innerHTML = '<option value="">-- elige un lead --</option>';
-      window.leads.forEach(lead => {
-        const option = document.createElement('option');
-        option.value = lead.place_id;
-        option.textContent = `${lead.name || lead.place_id} (${lead.rating ? lead.rating + '★' : 'sin rating'})`;
-        select.appendChild(option);
-      });
-      document.getElementById('lead-summary').textContent = window.leads.length
-        ? `${window.leads.length} lead(s) disponibles`
-        : 'No se encontraron leads';
-      if (window.leads.length && window.leads[0].site) {
-        document.getElementById('workflow-url').value = window.leads[0].site;
-      }
+  /* ── RUN PIPELINE ── */
+  async function runPL(pipe, body) {
+    const btnId = 'btn-' + pipe;
+    setBusy(btnId, true);
+    setOutput('⏳ Ejecutando ' + pipe.toUpperCase() + '...');
+    try {
+      const d = await api('/pipeline/' + pipe, body);
+      setOutput(d);
+      if (d.status === 'ok') toast(pipe.toUpperCase() + ' completado ✓', 'ok');
+      else toast((d.error || pipe + ' error'), 'err');
+      return d;
+    } catch(e) {
+      setOutput('Error: ' + e.message);
+      toast('Error en ' + pipe + ': ' + e.message, 'err');
+      return null;
+    } finally {
+      setBusy(btnId, false);
     }
+  }
 
-    function selectLead(place_id) {
-      const lead = window.leads.find(item => item.place_id === place_id);
-      const summary = document.getElementById('lead-summary');
-      if (!lead) {
-        summary.textContent = 'Ningún lead seleccionado.';
-        return;
-      }
-      summary.textContent = `Seleccionado: ${lead.name || lead.place_id} • ${lead.full_address || 'sin dirección'} • ${lead.site || 'sin sitio'}`;
-      if (lead.site) {
-        document.getElementById('workflow-url').value = lead.site;
-      }
+  /* ── P1 especial ── */
+  async function runP1() {
+    const d = await runPL('p1', {
+      query: v('p1-query') || 'negocios en Ciudad de México',
+      limit: n('p1-limit') || 20
+    });
+    if (d?.leads?.length) fillSelector(d.leads);
+  }
+
+  function fillSelector(leads) {
+    _leads = leads || [];
+    const sel = $('lead-select');
+    sel.innerHTML = '<option value="">— elige un lead —</option>';
+    _leads.forEach(l => {
+      const o = document.createElement('option');
+      o.value = l.place_id;
+      o.textContent = (l.name || l.place_id) + (l.rating ? ' · ' + l.rating + '★' : '');
+      sel.appendChild(o);
+    });
+    toast(_leads.length + ' leads cargados', 'ok');
+  }
+
+  function selectLead(place_id) {
+    const l = _leads.find(x => x.place_id === place_id);
+    const info = $('lead-info');
+    if (!l) { info.innerHTML = '<em>Sin lead seleccionado</em>'; return; }
+
+    info.innerHTML =
+      '<strong>' + (l.name || 'Sin nombre') + '</strong>' +
+      (l.full_address ? l.full_address + '<br>' : '') +
+      (l.rating ? '<span class="tag">⭐ ' + l.rating + '</span>' : '') +
+      (l.reviews_count ? '<span class="tag">💬 ' + l.reviews_count + '</span>' : '') +
+      (l.site ? '<br><a href="' + l.site + '" target="_blank" style="color:var(--accent);font-size:0.81rem;margin-top:6px;display:inline-block">' + l.site + '</a>' : '');
+
+    if (l.site) $('workflow-url').value = l.site;
+
+    // Auto-fill place_id en todos los pipelines
+    ['p2','p3','p4','p5','p6'].forEach(p => {
+      const el = $(p + '-place_id');
+      if (el) el.value = place_id;
+    });
+  }
+
+  /* ── SECUENCIA ── */
+  async function runSequence() {
+    const place_id = $('lead-select').value;
+    const url = v('workflow-url');
+    if (!place_id) { toast('Selecciona un lead primero', 'err'); return; }
+    if (!url)      { toast('Ingresa la URL del sitio', 'err'); return; }
+    setOutput('⏳ Ejecutando secuencia P2 → P5...');
+    try {
+      const d = await api('/pipeline/sequence', { place_id, url, max_reviews: 10 });
+      setOutput(d);
+      const ok = Object.values(d).filter(x => x?.status === 'ok').length;
+      toast('Secuencia completa · ' + ok + ' OK', 'ok');
+    } catch(e) {
+      setOutput('Error: ' + e.message);
+      toast('Error secuencia: ' + e.message, 'err');
     }
+  }
 
-    async function fetchJson(path) {
-      try {
-        const response = await fetch(path);
-        const data = await response.json();
-        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-      } catch (error) {
-        document.getElementById('output').textContent = 'Error: ' + error;
-      }
+  /* ── STATS ── */
+  async function loadStats() {
+    try {
+      const d = await api('/test-db');
+      const count = Array.isArray(d?.datos) ? d.datos.length : '—';
+      $('sys-stats').innerHTML =
+        '<span class="tag">DB ✓</span> ' + count + ' leads<br>' +
+        '<small style="color:var(--muted);margin-top:6px;display:block">Actualizado: ' + new Date().toLocaleTimeString('es-MX') + '</small>';
+      if (d?.datos?.length) fillSelector(d.datos);
+    } catch(e) {
+      $('sys-stats').innerHTML = '<span style="color:var(--error)">⚠ DB sin conexión</span>';
     }
+  }
 
-    async function runPipeline(path, body, callback) {
-      document.getElementById('output').textContent = 'Ejecutando ' + path + '...';
-      try {
-        const response = await fetch(path, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        const data = await response.json();
-        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-        if (callback) {
-          callback(data);
-        }
-        return data;
-      } catch (error) {
-        document.getElementById('output').textContent = 'Error: ' + error;
-        return null;
-      }
-    }
-
-    async function runFullWorkflow() {
-      const place_id = document.getElementById('lead-select').value;
-      const url = getValue('workflow-url');
-      if (!place_id) {
-        document.getElementById('output').textContent = 'Selecciona un lead antes de ejecutar la secuencia completa.';
-        return;
-      }
-      if (!url) {
-        document.getElementById('output').textContent = 'Ingresa una URL válida para ejecutar P3.';
-        return;
-      }
-
-      document.getElementById('output').textContent = 'Ejecutando secuencia completa...';
-      const result = await runPipeline('/pipeline/sequence', { place_id, url, max_reviews: Number(getValue('p2-max_reviews')) });
-      if (result) {
-        document.getElementById('output').textContent = JSON.stringify(result, null, 2);
-      }
-    }
-
-    async function loadStatus() {
-      try {
-        const response = await fetch('/health');
-        const data = await response.json();
-        document.getElementById('app-status').textContent = 'Estado: ' + data.status;
-        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-      } catch (error) {
-        document.getElementById('app-status').textContent = 'Estado: error';
-        document.getElementById('output').textContent = 'Error: ' + error;
-      }
-    }
-
-    loadStatus();
-  </script>
+  /* ── INIT ── */
+  checkHealth();
+  loadStats();
+</script>
 </body>
 </html>
