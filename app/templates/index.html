@@ -303,33 +303,58 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
       <div class="card">
         <div class="card-hd"><span class="pbadge">P2</span><h3>Obtener Reviews</h3></div>
-        <div class="field"><label>place_id</label><input id="p2-place_id" placeholder="ChIJ..."/></div>
+        <div class="field">
+          <label>Lead scrapeado</label>
+          <select id="p2-place_id" class="lead-sel-card" onchange="syncLeadFromCard(this.value)">
+            <option value="">— ejecuta P1 para ver leads —</option>
+          </select>
+        </div>
         <div class="field"><label>Máx. reviews</label><input id="p2-max" type="number" value="10"/></div>
         <button class="btn-run" id="btn-p2" onclick="runP2()"><span class="spin"></span><span>Ejecutar P2</span></button>
       </div>
 
       <div class="card">
         <div class="card-hd"><span class="pbadge">P3</span><h3>Analizar Sitio Web</h3></div>
-        <div class="field"><label>place_id</label><input id="p3-place_id" placeholder="ChIJ..."/></div>
+        <div class="field">
+          <label>Lead scrapeado</label>
+          <select id="p3-place_id" class="lead-sel-card" onchange="syncLeadFromCard(this.value)">
+            <option value="">— ejecuta P1 para ver leads —</option>
+          </select>
+        </div>
         <div class="field"><label>URL del sitio</label><input id="p3-url" placeholder="https://ejemplo.com"/></div>
         <button class="btn-run" id="btn-p3" onclick="runP3()"><span class="spin"></span><span>Ejecutar P3</span></button>
       </div>
 
       <div class="card">
         <div class="card-hd"><span class="pbadge">P4</span><h3>Generar Keypoints IA</h3></div>
-        <div class="field"><label>place_id</label><input id="p4-place_id" placeholder="ChIJ..."/></div>
+        <div class="field">
+          <label>Lead scrapeado</label>
+          <select id="p4-place_id" class="lead-sel-card" onchange="syncLeadFromCard(this.value)">
+            <option value="">— ejecuta P1 para ver leads —</option>
+          </select>
+        </div>
         <button class="btn-run" id="btn-p4" onclick="runP4()"><span class="spin"></span><span>Ejecutar P4</span></button>
       </div>
 
       <div class="card">
         <div class="card-hd"><span class="pbadge">P5</span><h3>Generar Emails IA</h3></div>
-        <div class="field"><label>place_id</label><input id="p5-place_id" placeholder="ChIJ..."/></div>
+        <div class="field">
+          <label>Lead scrapeado</label>
+          <select id="p5-place_id" class="lead-sel-card" onchange="syncLeadFromCard(this.value)">
+            <option value="">— ejecuta P1 para ver leads —</option>
+          </select>
+        </div>
         <button class="btn-run" id="btn-p5" onclick="runP5()"><span class="spin"></span><span>Ejecutar P5</span></button>
       </div>
 
       <div class="card">
         <div class="card-hd"><span class="pbadge">P6</span><h3>Enviar Email</h3></div>
-        <div class="field"><label>place_id</label><input id="p6-place_id" placeholder="ChIJ..."/></div>
+        <div class="field">
+          <label>Lead scrapeado</label>
+          <select id="p6-place_id" class="lead-sel-card" onchange="syncLeadFromCard(this.value)">
+            <option value="">— ejecuta P1 para ver leads —</option>
+          </select>
+        </div>
         <div class="field"><label>Email destino</label><input id="p6-email" type="email" placeholder="cliente@ejemplo.com"/></div>
         <div class="field"><label>Nombre destino</label><input id="p6-name" placeholder="Juan Pérez"/></div>
         <button class="btn-run" id="btn-p6" onclick="runP6()"><span class="spin"></span><span>Enviar email</span></button>
@@ -679,17 +704,32 @@ function modalNext() {
   if (_nextAction) _nextAction();
 }
 
-/* ───── SIDEBAR LEAD SELECTOR ───── */
+/* ───── SIDEBAR + CARD LEAD SELECTOR ───── */
 function fillSelector(leads) {
   _leads = leads || [];
-  const sel = $('lead-sel');
-  sel.innerHTML = '<option value="">— elige un lead —</option>';
-  _leads.forEach(l => {
-    const o = document.createElement('option');
-    o.value = l.place_id;
-    o.textContent = (l.name || l.place_id) + (l.rating ? ' · ' + l.rating + '★' : '');
-    sel.appendChild(o);
+  // Últimos 5 para el historial de las cards
+  const recent = _leads.slice(0, 5);
+  const opts = '<option value="">— elige un lead —</option>' +
+    recent.map(l =>
+      `<option value="${l.place_id}">${l.name || l.place_id}${l.rating ? ' · ' + l.rating + '★' : ''}</option>`
+    ).join('');
+  // Sidebar
+  $('lead-sel').innerHTML = opts;
+  // Cards P2-P6
+  ['p2-place_id','p3-place_id','p4-place_id','p5-place_id','p6-place_id'].forEach(id => {
+    const el = $(id);
+    if (el && el.tagName === 'SELECT') el.innerHTML = opts;
   });
+}
+
+function syncLeadFromCard(place_id) {
+  if (!place_id) return;
+  // Sincronizar todos los selects
+  ['lead-sel','p2-place_id','p3-place_id','p4-place_id','p5-place_id','p6-place_id'].forEach(id => {
+    const el = $(id);
+    if (el) el.value = place_id;
+  });
+  selectLead(place_id);
 }
 
 function selectLead(place_id) {
@@ -704,9 +744,11 @@ function selectLead(place_id) {
     ${l.site ? `<br><a href="${l.site}" target="_blank" style="color:var(--blue);font-size:.79rem;margin-top:5px;display:inline-block">${l.site}</a>` : ''}`;
   if (l.site) $('seq-url').value = l.site;
   ['p2','p3','p4','p5','p6'].forEach(p => {
-    const el = $(p + '-place_id') || $(p+'-place_id');
+    const el = $(p + '-place_id');
     if (el) el.value = place_id;
   });
+  // Sidebar también
+  const ss = $('lead-sel'); if (ss) ss.value = place_id;
   // p3-url
   if (l.site) { const u = $('p3-url'); if (u) u.value = l.site; }
 }
