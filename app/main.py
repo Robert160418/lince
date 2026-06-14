@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from app.config import SUPABASE_URL, SUPABASE_KEY
 from app.utils.supabase_client import supabase_select
 from app.pipelines.p1_google_maps import scrape_google_maps, procesar_y_guardar_leads
+from app.utils.batch_processor import process_lote
 from app.pipelines.p2_reviews import obtener_reviews, procesar_y_guardar_reviews
 from app.pipelines.p3_website_analysis import scrape_website, analizar_y_guardar
 from app.pipelines.p4_keypoints import generar_keypoints
@@ -38,7 +39,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 @app.get("/", include_in_schema=False)
 async def index():
-    return FileResponse(BASE_DIR / "templates" / "index.html")
+    return FileResponse(BASE_DIR / "templates" / "index.html", media_type="text/html; charset=utf-8")
 
 
 # ----- Modelos de entrada (campo unificado: place_id) -----
@@ -70,6 +71,9 @@ class SequenceBody(BaseModel):
     place_id: str
     url: str
     max_reviews: int = 5
+
+class BatchBody(BaseModel):
+    lote_id: str
 
 
 # ----- Endpoints generales -----
@@ -115,14 +119,42 @@ async def test_db():
 
 # ----- Pipelines -----
 
+@app.get("/lotes")
+async def get_lotes():
+    """Devuelve todos los lotes (grupos de leads por scrape) con conteo y estado."""
+    leads = await supabase_select("leads")
+    lotes: dict = {}
+    for lead in leads:
+        lid = lead.get("lote_id") or "sin_lote"
+        if lid not in lotes:
+            lotes[lid] = {
+                "lote_id": lid,
+                "query": lead.get("query", ""),
+                "count": 0,
+                "place_ids": [],
+            }
+        lotes[lid]["count"] += 1
+        lotes[lid]["place_ids"].append(lead.get("place_id", ""))
+    # Ordenar más recientes primero (lote_id lleva timestamp al final)
+    return sorted(lotes.values(), key=lambda x: x["lote_id"], reverse=True)
+
+
+@app.post("/pipeline/batch")
+async def ejecutar_batch(body: BatchBody):
+    """Ejecuta P2→P3→P4→P5 en todos los leads de un lote y actualiza Google Sheets."""
+    resultado = await process_lote(body.lote_id)
+    return resultado
+
+
 @app.post("/pipeline/p1")
 async def ejecutar_p1(body: P1Body):
     resultados = await scrape_google_maps(query=body.query, limit=body.limit)
-    guardados = await procesar_y_guardar_leads(resultados, query=body.query)
+    resultado = await procesar_y_guardar_leads(resultados, query=body.query)
     return {
         "status": "ok",
         "encontrados": len(resultados),
-        "guardados": guardados,
+        "guardados": resultado.get("guardados", 0) if isinstance(resultado, dict) else resultado,
+        "lote_id": resultado.get("lote_id", "") if isinstance(resultado, dict) else "",
         "leads": resultados,
     }
 
