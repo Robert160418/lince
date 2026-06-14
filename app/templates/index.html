@@ -18,181 +18,113 @@
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;
   background-image:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(59,130,246,.1),transparent),
   radial-gradient(ellipse 40% 30% at 85% 70%,rgba(139,92,246,.05),transparent);}
-
-/* LAYOUT */
 .wrap{max-width:1200px;margin:0 auto;padding:24px 20px 60px}
-
-/* HEADER */
-.hdr{display:flex;align-items:center;justify-content:space-between;gap:16px;
-  padding:18px 26px;background:var(--s1);border:1px solid var(--border);
-  border-radius:18px;margin-bottom:22px;backdrop-filter:blur(10px)}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 26px;background:var(--s1);border:1px solid var(--border);border-radius:18px;margin-bottom:22px;backdrop-filter:blur(10px)}
 .hdr-brand{display:flex;align-items:center;gap:12px}
-.logo{width:40px;height:40px;background:var(--grad);border-radius:11px;
-  display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.logo{width:40px;height:40px;background:var(--grad);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
 .hdr h1{font-size:1.35rem;font-weight:800;letter-spacing:-.03em}
 .hdr p{font-size:.82rem;color:var(--muted);margin-top:2px}
-.badge{display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;
-  font-size:.8rem;font-weight:600;white-space:nowrap;transition:all .3s}
+.badge{display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;font-size:.8rem;font-weight:600;white-space:nowrap;transition:all .3s}
 .badge.ok{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green)}
 .badge.loading{background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);color:var(--cyan)}
 .badge.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--red)}
 .dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-
-/* QUICK BAR */
 .qbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
-.qbtn{padding:8px 16px;border-radius:9px;border:1px solid var(--border);background:var(--s1);
-  color:var(--muted);font-size:.83rem;font-weight:500;cursor:pointer;
-  transition:all .18s;font-family:inherit}
+.qbtn{padding:8px 16px;border-radius:9px;border:1px solid var(--border);background:var(--s1);color:var(--muted);font-size:.83rem;font-weight:500;cursor:pointer;transition:all .18s;font-family:inherit}
 .qbtn:hover{border-color:var(--bh);color:var(--txt);background:var(--s2)}
-
-/* GRID */
+.qbtn.active{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.08)}
 .mgrid{display:grid;grid-template-columns:1fr 355px;gap:18px;align-items:start}
 @media(max-width:860px){.mgrid{grid-template-columns:1fr}}
-.section-lbl{font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
-  color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
-
-/* PIPE CARDS */
+.section-lbl{font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-.card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;
-  transition:border-color .2s,transform .2s}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;transition:border-color .2s,transform .2s}
 .card:hover{border-color:var(--bh);transform:translateY(-1px)}
 .card-hd{display:flex;align-items:center;gap:9px;margin-bottom:14px}
-.pbadge{padding:3px 8px;border-radius:5px;font-size:.7rem;font-weight:800;
-  letter-spacing:.05em;background:var(--grad);color:#fff}
+.pbadge{padding:3px 8px;border-radius:5px;font-size:.7rem;font-weight:800;letter-spacing:.05em;background:var(--grad);color:#fff}
 .card h3{font-size:.92rem;font-weight:600}
 .field{margin-bottom:10px}
-.field label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);
-  margin-bottom:4px;text-transform:uppercase;letter-spacing:.07em}
-.field input,.field select{width:100%;padding:9px 12px;border-radius:9px;
-  border:1px solid var(--border);background:rgba(6,9,15,.6);color:var(--txt);
-  font-size:.86rem;font-family:inherit;outline:none;transition:border-color .18s}
+.field label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.07em}
+.field input,.field select{width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:rgba(6,9,15,.6);color:var(--txt);font-size:.86rem;font-family:inherit;outline:none;transition:border-color .18s}
 .field input:focus,.field select:focus{border-color:var(--blue)}
 .field input::placeholder{color:var(--muted);opacity:.5}
-.btn-run{width:100%;margin-top:12px;padding:11px;border:none;border-radius:11px;
-  background:var(--grad);color:#fff;font-size:.86rem;font-weight:700;cursor:pointer;
-  transition:opacity .18s,transform .15s;font-family:inherit;
-  display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-run{width:100%;margin-top:12px;padding:11px;border:none;border-radius:11px;background:var(--grad);color:#fff;font-size:.86rem;font-weight:700;cursor:pointer;transition:opacity .18s,transform .15s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px}
 .btn-run:hover:not(:disabled){opacity:.83;transform:translateY(-1px)}
 .btn-run:disabled{opacity:.35;cursor:not-allowed;transform:none}
-
-/* RIGHT PANEL */
 .rpanel{display:flex;flex-direction:column;gap:14px}
 .pcrd{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px}
-.pcrd h3{font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
-  color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.pcrd h3{font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
 .lead-info{font-size:.84rem;line-height:1.7;color:var(--muted)}
 .lead-info strong{color:var(--txt);display:block;font-size:.93rem;margin-bottom:3px}
-.tag{display:inline-block;padding:2px 7px;border-radius:4px;
-  background:rgba(59,130,246,.12);color:var(--blue);font-size:.72rem;margin:2px 2px 0 0}
-.btn-seq{width:100%;margin-top:12px;padding:12px;border:none;border-radius:11px;
-  background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;
-  font-size:.88rem;font-weight:700;cursor:pointer;transition:opacity .18s,transform .15s;font-family:inherit}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;background:rgba(59,130,246,.12);color:var(--blue);font-size:.72rem;margin:2px 2px 0 0}
+.btn-seq{width:100%;margin-top:12px;padding:12px;border:none;border-radius:11px;background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;font-size:.88rem;font-weight:700;cursor:pointer;transition:opacity .18s,transform .15s;font-family:inherit}
 .btn-seq:hover{opacity:.83;transform:translateY(-1px)}
-
-/* ═══════════════════════════════════════
-   MODAL OVERLAY
-═══════════════════════════════════════ */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
-  z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;
-  opacity:0;pointer-events:none;transition:opacity .25s}
+.lotes-panel{display:none;background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:22px}
+.lotes-panel.show{display:block}
+.lotes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:14px}
+.lote-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .18s,background .18s}
+.lote-card:hover{border-color:var(--bh);background:rgba(59,130,246,.05)}
+.lote-id{font-size:.78rem;color:var(--muted);font-family:monospace;margin-bottom:4px}
+.lote-query{font-weight:600;font-size:.9rem;margin-bottom:6px}
+.lote-meta{display:flex;align-items:center;justify-content:space-between}
+.lote-count{font-size:.78rem;color:var(--muted)}
+.btn-batch{padding:6px 14px;border:none;border-radius:8px;background:var(--grad);color:#fff;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .18s}
+.btn-batch:hover{opacity:.82}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
 .overlay.show{opacity:1;pointer-events:all}
-.modal{background:var(--s1);border:1px solid rgba(255,255,255,.1);border-radius:24px;
-  width:100%;max-width:580px;max-height:85vh;overflow-y:auto;
-  transform:translateY(16px) scale(.97);transition:transform .28s cubic-bezier(.34,1.4,.64,1);
-  box-shadow:0 40px 80px rgba(0,0,0,.5)}
+.modal{background:var(--s1);border:1px solid rgba(255,255,255,.1);border-radius:24px;width:100%;max-width:580px;max-height:85vh;overflow-y:auto;transform:translateY(16px) scale(.97);transition:transform .28s cubic-bezier(.34,1.4,.64,1);box-shadow:0 40px 80px rgba(0,0,0,.5)}
 .overlay.show .modal{transform:translateY(0) scale(1)}
-
-.modal-hdr{display:flex;align-items:center;justify-content:space-between;
-  padding:22px 24px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;
-  background:var(--s1);z-index:1;border-radius:24px 24px 0 0}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--s1);z-index:1;border-radius:24px 24px 0 0}
 .modal-title{display:flex;align-items:center;gap:10px}
 .modal-title .pbadge{font-size:.8rem;padding:5px 11px}
 .modal-title h2{font-size:1.05rem;font-weight:700}
-.close-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
-  background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:all .18s}
+.close-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s}
 .close-btn:hover{background:var(--s2);color:var(--txt)}
 .modal-body{padding:24px}
-
-/* ── ANIMATION STAGES ── */
-.stage{display:none}
-.stage.active{display:block}
-
-/* P1: Radar / Maps */
+.stage{display:none}.stage.active{display:block}
 .anim-radar{display:flex;flex-direction:column;align-items:center;padding:32px 0}
-.radar-ring{width:140px;height:140px;border-radius:50%;border:2px solid rgba(59,130,246,.2);
-  display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px}
+.radar-ring{width:140px;height:140px;border-radius:50%;border:2px solid rgba(59,130,246,.2);display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px}
 .radar-ring::before,.radar-ring::after{content:'';position:absolute;border-radius:50%;border:1.5px solid rgba(59,130,246,.15)}
-.radar-ring::before{width:100px;height:100px}
-.radar-ring::after{width:60px;height:60px}
-.radar-sweep{position:absolute;width:50%;height:2px;background:linear-gradient(90deg,transparent,var(--blue));
-  transform-origin:left center;animation:sweep 1.8s linear infinite;top:50%;left:50%}
+.radar-ring::before{width:100px;height:100px}.radar-ring::after{width:60px;height:60px}
+.radar-sweep{position:absolute;width:50%;height:2px;background:linear-gradient(90deg,transparent,var(--blue));transform-origin:left center;animation:sweep 1.8s linear infinite;top:50%;left:50%}
 @keyframes sweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .radar-dot{font-size:1.8rem}
 .anim-label{font-size:.9rem;color:var(--muted);text-align:center}
 .anim-sub{font-size:.78rem;color:var(--muted);opacity:.6;margin-top:4px;text-align:center}
-
-/* P2: Stars */
 .anim-stars{display:flex;flex-direction:column;align-items:center;padding:32px 0}
-.star-row{display:flex;gap:8px;margin-bottom:20px}
-.star{font-size:2rem;animation:starPop .4s ease both}
-.star:nth-child(1){animation-delay:.1s}.star:nth-child(2){animation-delay:.25s}
-.star:nth-child(3){animation-delay:.4s}.star:nth-child(4){animation-delay:.55s}
-.star:nth-child(5){animation-delay:.7s}
-@keyframes starPop{from{transform:scale(0) rotate(-20deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
-
-/* P3: Browser scan */
+.star-row{display:flex;gap:8px;margin-bottom:20px;font-size:2rem}
 .anim-scan{display:flex;flex-direction:column;align-items:center;padding:32px 0}
 .browser-box{width:200px;border:1.5px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;margin-bottom:20px}
 .browser-bar{background:rgba(255,255,255,.05);padding:7px 10px;display:flex;gap:5px}
 .brdot{width:7px;height:7px;border-radius:50%}
 .browser-content{padding:12px;display:flex;flex-direction:column;gap:6px}
-.scan-line{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--cyan));
-  animation:scanGrow 1s ease-in-out infinite alternate}
-.scan-line:nth-child(1){width:80%;animation-delay:0s}
-.scan-line:nth-child(2){width:60%;animation-delay:.2s}
-.scan-line:nth-child(3){width:90%;animation-delay:.4s}
-.scan-line:nth-child(4){width:50%;animation-delay:.6s}
+.scan-line{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--cyan));animation:scanGrow 1s ease-in-out infinite alternate}
+.scan-line:nth-child(1){width:80%}.scan-line:nth-child(2){width:60%;animation-delay:.2s}.scan-line:nth-child(3){width:90%;animation-delay:.4s}.scan-line:nth-child(4){width:50%;animation-delay:.6s}
 @keyframes scanGrow{from{opacity:.3}to{opacity:1}}
-
-/* P4: Brain/AI */
 .anim-brain{display:flex;flex-direction:column;align-items:center;padding:32px 0}
 .brain-icon{font-size:3.5rem;margin-bottom:12px;animation:breathe 1.5s ease-in-out infinite}
 @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
 .typing-dots{display:flex;gap:5px;margin-top:6px}
-.tdot{width:8px;height:8px;border-radius:50%;background:var(--purple);
-  animation:tdot .8s ease-in-out infinite}
-.tdot:nth-child(1){animation-delay:0s}.tdot:nth-child(2){animation-delay:.2s}.tdot:nth-child(3){animation-delay:.4s}
+.tdot{width:8px;height:8px;border-radius:50%;background:var(--purple);animation:tdot .8s ease-in-out infinite}
+.tdot:nth-child(2){animation-delay:.2s}.tdot:nth-child(3){animation-delay:.4s}
 @keyframes tdot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-6px);opacity:1}}
-
-/* P5: Typewriter */
 .anim-type{display:flex;flex-direction:column;align-items:center;padding:32px 0}
 .email-icon{font-size:3rem;margin-bottom:12px;animation:float 2s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 .type-bar{display:flex;gap:4px;margin-top:8px}
 .tbar{width:20px;height:4px;border-radius:2px;background:var(--grad);animation:tbar .6s ease-in-out infinite alternate}
-.tbar:nth-child(1){animation-delay:0s}.tbar:nth-child(2){animation-delay:.1s}
-.tbar:nth-child(3){animation-delay:.2s}.tbar:nth-child(4){animation-delay:.3s}
-.tbar:nth-child(5){animation-delay:.4s}
+.tbar:nth-child(2){animation-delay:.1s}.tbar:nth-child(3){animation-delay:.2s}.tbar:nth-child(4){animation-delay:.3s}.tbar:nth-child(5){animation-delay:.4s}
 @keyframes tbar{from{opacity:.2}to{opacity:1}}
-
-/* P6: Send */
 .anim-send{display:flex;flex-direction:column;align-items:center;padding:32px 0}
 .plane-icon{font-size:3rem;margin-bottom:12px;animation:plane 1.5s ease-in-out infinite}
 @keyframes plane{0%{transform:translate(0,0) rotate(-15deg)}50%{transform:translate(10px,-8px) rotate(-15deg)}100%{transform:translate(0,0) rotate(-15deg)}}
-
-/* ── RESULTS ── */
-.result-ok,.result-err{padding:20px;border-radius:14px;margin-top:0}
+.result-ok,.result-err{padding:20px;border-radius:14px}
 .result-ok{background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2)}
 .result-err{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2)}
 .result-hd{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-weight:700}
 .result-hd .icon{font-size:1.2rem}
-
-/* Lead cards grid */
 .lead-cards{display:flex;flex-direction:column;gap:10px}
-.lcard{background:var(--s2);border:1px solid var(--border);border-radius:12px;
-  padding:13px 15px;cursor:pointer;transition:border-color .18s}
+.lcard{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:13px 15px;cursor:pointer;transition:border-color .18s}
 .lcard:hover{border-color:var(--bh)}
 .lcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
 .lcard-name{font-weight:600;font-size:.9rem}
@@ -200,716 +132,393 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .lcard-addr{font-size:.78rem;color:var(--muted)}
 .lcard-url{font-size:.76rem;color:var(--blue);margin-top:3px}
 .lcard.selected{border-color:var(--blue);background:rgba(59,130,246,.08)}
-
-/* Review cards */
-.rev-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px}
-.rev-author{font-weight:600;font-size:.87rem;margin-bottom:4px}
-.rev-stars{color:var(--yellow);font-size:.8rem;margin-bottom:6px}
-.rev-text{font-size:.82rem;color:var(--muted);line-height:1.55}
-
-/* Keypoints */
 .kp-list{list-style:none}
-.kp-list li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);
-  font-size:.87rem;line-height:1.5}
+.kp-list li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:.87rem;line-height:1.5}
 .kp-list li:last-child{border-bottom:none}
 .kp-bullet{color:var(--blue);font-size:1rem;flex-shrink:0;margin-top:1px}
-
-/* Email preview */
-.email-prev{background:var(--s2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.email-prev{background:var(--s2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px}
 .email-prev-hdr{padding:14px 16px;border-bottom:1px solid var(--border);font-size:.82rem;color:var(--muted)}
 .email-prev-hdr strong{color:var(--txt);display:block;font-size:.9rem;margin-bottom:2px}
-.email-prev-body{padding:16px;font-size:.83rem;line-height:1.65;color:var(--txt);
-  white-space:pre-wrap;max-height:280px;overflow-y:auto}
-
-/* Website analysis */
+.email-prev-body{padding:16px;font-size:.83rem;line-height:1.65;color:var(--txt);white-space:pre-wrap;max-height:280px;overflow-y:auto}
 .analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .aitem{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px}
 .aitem-lbl{font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px}
 .aitem-val{font-size:.84rem;color:var(--txt);line-height:1.5}
-
-/* Success send */
 .send-success{text-align:center;padding:20px 0}
 .send-icon{font-size:3.5rem;margin-bottom:12px;animation:popIn .4s cubic-bezier(.34,1.6,.64,1)}
 @keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
 .send-success h3{font-size:1.05rem;font-weight:700;margin-bottom:6px}
 .send-success p{color:var(--muted);font-size:.86rem}
-
-/* Modal footer */
-.modal-foot{padding:16px 24px 22px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border)}
-.btn-secondary{padding:10px 20px;border-radius:10px;border:1px solid var(--border);
-  background:transparent;color:var(--muted);font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit}
-.btn-primary{padding:10px 22px;border-radius:10px;border:none;
-  background:var(--grad);color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;
-  transition:opacity .18s}
-.btn-primary:hover{opacity:.85}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed}
-
-/* TOAST */
-#toast-area{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:200}
-.toast{padding:11px 17px;border-radius:11px;background:var(--s1);border:1px solid var(--border);
-  font-size:.83rem;max-width:300px;animation:tIn .22s ease}
-.toast.ok{border-color:rgba(16,185,129,.4)}.toast.err{border-color:rgba(239,68,68,.4);color:#fca5a5}
-@keyframes tIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-
-/* Spinner inline */
-.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
-  border-radius:50%;animation:spinR .6s linear infinite;display:none}
-.running .spin{display:block}
-@keyframes spinR{to{transform:rotate(360deg)}}
-
-/* Scrollbar */
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+.btn-secondary{padding:9px 18px;border:1px solid var(--border);border-radius:9px;background:transparent;color:var(--muted);font-size:.84rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.btn-secondary:hover{border-color:var(--bh);color:var(--txt)}
+.btn-primary{padding:9px 20px;border:none;border-radius:9px;background:var(--grad);color:#fff;font-size:.84rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .18s}
+.btn-primary:hover{opacity:.83}
+.batch-modal{max-width:700px}
+.batch-prog-bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.batch-prog-fill{height:100%;background:var(--grad);border-radius:3px;transition:width .4s ease}
+.batch-prog-txt{font-size:.78rem;color:var(--muted);margin-bottom:16px}
+.batch-leads{display:flex;flex-direction:column;gap:8px}
+.batch-lead-row{background:var(--s2);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+.batch-lead-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.batch-lead-name{font-weight:600;font-size:.88rem}
+.batch-steps{display:flex;gap:6px;flex-wrap:wrap}
+.step-badge{padding:3px 9px;border-radius:5px;font-size:.72rem;font-weight:700;border:1px solid var(--border);color:var(--muted);background:transparent;transition:all .25s}
+.step-badge.running{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.1);animation:pulse 1.2s infinite}
+.step-badge.ok{border-color:var(--green);color:var(--green);background:rgba(16,185,129,.1)}
+.step-badge.err{border-color:var(--red);color:var(--red);background:rgba(239,68,68,.1)}
+.step-badge.skip{border-color:var(--muted);color:var(--muted);opacity:.5}
+.batch-summary{background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:16px;margin-top:14px;display:none}
+.batch-summary.show{display:block}
+.batch-sum-row{display:flex;justify-content:space-between;font-size:.85rem;padding:4px 0}
+.batch-sum-row strong{color:var(--txt)}
+.batch-sheet-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 14px;border-radius:8px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green);font-size:.82rem;font-weight:600;text-decoration:none;transition:opacity .18s}
+.batch-sheet-link:hover{opacity:.8}
 </style>
 </head>
 <body>
 <div class="wrap">
-
-<!-- HEADER -->
-<header class="hdr">
-  <div class="hdr-brand">
-    <div class="logo">🐆</div>
+  <header class="hdr">
+    <div class="hdr-brand">
+      <div class="logo">🐆</div>
+      <div><h1>Lince Pipeline</h1><p>Prospección automática de leads B2B</p></div>
+    </div>
+    <div id="hdrBadge" class="badge loading"><div class="dot"></div>Conectando…</div>
+  </header>
+  <div class="qbar">
+    <button class="qbtn" onclick="scrollTo2('#p1card')">🗺️ P1 Scrape</button>
+    <button class="qbtn" onclick="scrollTo2('#p2card')">⭐ P2 Reviews</button>
+    <button class="qbtn" onclick="scrollTo2('#p3card')">🌐 P3 Web</button>
+    <button class="qbtn" onclick="scrollTo2('#p4card')">🧠 P4 Análisis</button>
+    <button class="qbtn" onclick="scrollTo2('#p5card')">✉️ P5 Emails</button>
+    <button class="qbtn" onclick="scrollTo2('#p6card')">🚀 P6 Envío</button>
+    <button class="qbtn" id="btnVerLotes" onclick="toggleLotes()">📊 Ver Lotes</button>
+  </div>
+  <div class="lotes-panel" id="lotesPanel">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="section-lbl" style="margin:0;border:none">Lotes disponibles</div>
+      <button class="btn-secondary" style="font-size:.75rem;padding:6px 12px" onclick="loadLotes()">↺ Recargar</button>
+    </div>
+    <div id="lotesGrid" class="lotes-grid"><div style="color:var(--muted);font-size:.85rem;padding:20px 0">Cargando…</div></div>
+  </div>
+  <div class="mgrid">
     <div>
-      <h1>Lince</h1>
-      <p>Pipeline de leads automatizado · P1 → P6</p>
+      <div class="section-lbl">Pipeline de procesamiento</div>
+      <div class="pgrid">
+        <div class="card" id="p1card">
+          <div class="card-hd"><span class="pbadge">P1</span><h3>Scrape Google Maps</h3></div>
+          <div class="field"><label>Búsqueda</label><input id="p1Query" type="text" placeholder="restaurantes Madrid" /></div>
+          <div class="field"><label>Límite</label><input id="p1Limit" type="number" value="10" min="1" max="50" /></div>
+          <button class="btn-run" onclick="runP1()"><span>🗺️</span> Ejecutar P1</button>
+        </div>
+        <div class="card" id="p2card">
+          <div class="card-hd"><span class="pbadge">P2</span><h3>Obtener Reviews</h3></div>
+          <div class="field"><label>Place ID</label><input id="p2PlaceId" type="text" placeholder="ChIJ..." /></div>
+          <div class="field"><label>Máx. Reviews</label><input id="p2Max" type="number" value="10" min="1" max="50" /></div>
+          <button class="btn-run" onclick="runP2()"><span>⭐</span> Ejecutar P2</button>
+        </div>
+        <div class="card" id="p3card">
+          <div class="card-hd"><span class="pbadge">P3</span><h3>Análisis de Web</h3></div>
+          <div class="field"><label>Place ID</label><input id="p3PlaceId" type="text" placeholder="ChIJ..." /></div>
+          <div class="field"><label>URL del sitio</label><input id="p3Url" type="text" placeholder="https://ejemplo.com" /></div>
+          <button class="btn-run" onclick="runP3()"><span>🌐</span> Ejecutar P3</button>
+        </div>
+        <div class="card" id="p4card">
+          <div class="card-hd"><span class="pbadge">P4</span><h3>Keypoints IA</h3></div>
+          <div class="field"><label>Place ID</label><input id="p4PlaceId" type="text" placeholder="ChIJ..." /></div>
+          <button class="btn-run" onclick="runP4()"><span>🧠</span> Ejecutar P4</button>
+        </div>
+        <div class="card" id="p5card">
+          <div class="card-hd"><span class="pbadge">P5</span><h3>Generar Emails</h3></div>
+          <div class="field"><label>Place ID</label><input id="p5PlaceId" type="text" placeholder="ChIJ..." /></div>
+          <button class="btn-run" onclick="runP5()"><span>✉️</span> Ejecutar P5</button>
+        </div>
+        <div class="card" id="p6card">
+          <div class="card-hd"><span class="pbadge">P6</span><h3>Enviar Emails</h3></div>
+          <div class="field"><label>Place ID</label><input id="p6PlaceId" type="text" placeholder="ChIJ..." /></div>
+          <div class="field"><label>Email destino (opcional)</label><input id="p6Email" type="email" placeholder="cliente@empresa.com" /></div>
+          <button class="btn-run" onclick="runP6()"><span>🚀</span> Ejecutar P6</button>
+        </div>
+      </div>
+    </div>
+    <div class="rpanel">
+      <div class="pcrd">
+        <h3>Lead seleccionado</h3>
+        <div class="lead-info" id="leadInfo"><span style="color:var(--muted);font-size:.83rem">Ejecuta P1 y selecciona un lead para ver su información aquí.</span></div>
+        <button class="btn-seq" id="btnSeq" style="display:none" onclick="runSequence()">⚡ Ejecutar P2→P5</button>
+      </div>
+      <div class="pcrd" id="statsCard" style="display:none">
+        <h3>Estadísticas del lote</h3>
+        <div id="statsBody" class="lead-info"></div>
+      </div>
     </div>
   </div>
-  <div class="badge loading" id="badge"><span class="dot"></span><span id="badge-txt">Conectando...</span></div>
-</header>
-
-<!-- QUICK BAR -->
-<div class="qbar">
-  <button class="qbtn" onclick="chkHealth()">⚡ Estado</button>
-  <button class="qbtn" onclick="loadAllLeads()">📋 Cargar leads de DB</button>
-  <button class="qbtn" onclick="openRaw('/test-db')">🔌 Test DB</button>
-  <button class="qbtn" onclick="openRaw('/debug')">🔧 Debug</button>
 </div>
 
-<!-- MAIN -->
-<div class="mgrid">
-
-  <!-- PIPELINES -->
-  <div>
-    <div class="section-lbl">Pipelines</div>
-    <div class="pgrid">
-
-      <div class="card">
-        <div class="card-hd"><span class="pbadge">P1</span><h3>Scraping Google Maps</h3></div>
-        <div class="field"><label>Búsqueda</label><input id="p1-query" placeholder="restaurantes Ciudad de México"/></div>
-        <div class="field"><label>Límite</label><input id="p1-limit" type="number" value="20" min="1" max="100"/></div>
-        <button class="btn-run" id="btn-p1" onclick="runP1()"><span class="spin"></span><span>Ejecutar P1</span></button>
-      </div>
-
-      <div class="card">
-        <div class="card-hd"><span class="pbadge">P2</span><h3>Obtener Reviews</h3></div>
-        <div class="field">
-          <label>Lead scrapeado</label>
-          <select id="p2-place_id" class="lead-sel-card" onchange="syncLeadFromCard(this.value)">
-            <option value="">— ejecuta P1 para ver leads —</option>
-          </select>
-        </div>
-        <div class="field"><label>Máx. reviews</label><input id="p2-max" type="number" value="10"/></div>
-        <button class="btn-run" id="btn-p2" onclick="runP2()"><span class="spin"></span><span>Ejecutar P2</span></button>
-      </div>
-
-      <div class="card">
-        <div class="card-hd"><span class="pbadge">P3</span><h3>Analizar Sitio Web</h3></div>
-        <div class="field">
-          <label>Lead scrapeado</label>
-          <select id="p3-place_id" class="lead-sel-card" onchange="syncLeadFromCard(this.value)">
-            <option value="">— ejecuta P1 para ver leads —</option>
-          </select>
-        </div>
-        <div class="field"><label>URL del sitio</label><input id="p3-url" placeholder="https://ejemplo.com"/></div>
-        <button class="btn-run" id="btn-p3" onclick="runP3()"><span class="spin"></span><span>Ejecutar P3</span></button>
-      </div>
-
-      <div class="card">
-        <div class="card-hd"><span class="pbadge">P4</span><h3>Generar Keypoints IA</h3></div>
-        <div class="field">
-          <label>Lead scrapeado</label>
-          <select id="p4-place_id" class="lead-sel-card" onchange="syncLeadFromCard(this.value)">
-            <option value="">— ejecuta P1 para ver leads —</option>
-          </select>
-        </div>
-        <button class="btn-run" id="btn-p4" onclick="runP4()"><span class="spin"></span><span>Ejecutar P4</span></button>
-      </div>
-
-      <div class="card">
-        <div class="card-hd"><span class="pbadge">P5</span><h3>Generar Emails IA</h3></div>
-        <div class="field">
-          <label>Lead scrapeado</label>
-          <select id="p5-place_id" class="lead-sel-card" onchange="syncLeadFromCard(this.value)">
-            <option value="">— ejecuta P1 para ver leads —</option>
-          </select>
-        </div>
-        <button class="btn-run" id="btn-p5" onclick="runP5()"><span class="spin"></span><span>Ejecutar P5</span></button>
-      </div>
-
-      <div class="card">
-        <div class="card-hd"><span class="pbadge">P6</span><h3>Enviar Email</h3></div>
-        <div class="field">
-          <label>Lead scrapeado</label>
-          <select id="p6-place_id" class="lead-sel-card" onchange="syncLeadFromCard(this.value)">
-            <option value="">— ejecuta P1 para ver leads —</option>
-          </select>
-        </div>
-        <div class="field"><label>Email destino</label><input id="p6-email" type="email" placeholder="cliente@ejemplo.com"/></div>
-        <div class="field"><label>Nombre destino</label><input id="p6-name" placeholder="Juan Pérez"/></div>
-        <button class="btn-run" id="btn-p6" onclick="runP6()"><span class="spin"></span><span>Enviar email</span></button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- RIGHT -->
-  <div class="rpanel">
-    <div class="pcrd">
-      <h3>Lead activo</h3>
-      <div class="field"><label>Seleccionar lead</label>
-        <select id="lead-sel" onchange="selectLead(this.value)">
-          <option value="">— ejecuta P1 para cargar leads —</option>
-        </select>
-      </div>
-      <div class="lead-info" id="lead-info"><em>Sin lead seleccionado</em></div>
-      <div class="field" style="margin-top:12px">
-        <label>URL para P3 / Secuencia</label>
-        <input id="seq-url" placeholder="https://ejemplo.com"/>
-      </div>
-      <button class="btn-seq" onclick="runSequence()">⚡ Ejecutar secuencia P2 → P5</button>
-    </div>
-    <div class="pcrd">
-      <h3>Sistema</h3>
-      <div class="lead-info" id="sys-info"><em>Cargando...</em></div>
-    </div>
-  </div>
-
-</div><!-- /mgrid -->
-</div><!-- /wrap -->
-
-<!-- ═══════════════ MODAL ═══════════════ -->
 <div class="overlay" id="overlay" onclick="closeModal(event)">
-  <div class="modal" id="modal">
+  <div class="modal">
     <div class="modal-hdr">
-      <div class="modal-title">
-        <span class="pbadge" id="m-badge">P1</span>
-        <h2 id="m-title">Scraping Google Maps</h2>
-      </div>
-      <button class="close-btn" onclick="closeModalNow()">✕</button>
+      <div class="modal-title"><span class="pbadge" id="modalBadge">P1</span><h2 id="modalTitle">Procesando…</h2></div>
+      <button class="close-btn" onclick="closeOverlay()">✕</button>
     </div>
-    <div class="modal-body">
-
-      <!-- LOADING STAGE -->
-      <div class="stage" id="stage-loading">
-        <!-- contenido dinámico según pipeline -->
-      </div>
-
-      <!-- SUCCESS STAGE -->
-      <div class="stage" id="stage-success">
-        <!-- contenido dinámico según pipeline -->
-      </div>
-
-      <!-- ERROR STAGE -->
-      <div class="stage" id="stage-error">
-        <div class="result-err">
-          <div class="result-hd"><span class="icon">⚠️</span><span>Error al ejecutar el pipeline</span></div>
-          <div id="err-msg" style="font-size:.85rem;color:var(--muted)"></div>
-        </div>
-      </div>
-
-    </div>
-    <div class="modal-foot" id="modal-foot" style="display:none">
-      <button class="btn-secondary" onclick="closeModalNow()">Cerrar</button>
-      <button class="btn-primary" id="m-next-btn" onclick="modalNext()" style="display:none">Siguiente paso →</button>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot" style="display:none">
+      <button class="btn-secondary" onclick="closeOverlay()">Cerrar</button>
     </div>
   </div>
 </div>
 
-<div id="toast-area"></div>
-
-<!-- RAW JSON modal (debug) -->
-<div class="overlay" id="raw-overlay" onclick="closeRaw(event)">
-  <div class="modal" style="max-width:700px">
+<div class="overlay" id="batchOverlay" onclick="closeBatchModal(event)">
+  <div class="modal batch-modal">
     <div class="modal-hdr">
-      <div class="modal-title"><h2 id="raw-title">Debug</h2></div>
-      <button class="close-btn" onclick="closeRaw()">✕</button>
+      <div class="modal-title"><span class="pbadge" style="background:linear-gradient(135deg,#7c3aed,#3b82f6)">BATCH</span><h2 id="batchTitle">Procesando lote…</h2></div>
+      <button class="close-btn" onclick="closeBatchOverlay()">✕</button>
     </div>
     <div class="modal-body">
-      <pre id="raw-content" style="font-family:monospace;font-size:.78rem;color:#a5f3fc;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow-y:auto;background:rgba(0,0,0,.3);padding:16px;border-radius:10px;border:1px solid var(--border)"></pre>
+      <div class="batch-prog-bar"><div class="batch-prog-fill" id="batchProgFill" style="width:0%"></div></div>
+      <div class="batch-prog-txt" id="batchProgTxt">Iniciando…</div>
+      <div class="batch-leads" id="batchLeadsList"></div>
+      <div class="batch-summary" id="batchSummary">
+        <div class="batch-sum-row"><span>Leads procesados:</span><strong id="sumTotal">—</strong></div>
+        <div class="batch-sum-row"><span>Completados OK:</span><strong id="sumOk">—</strong></div>
+        <div class="batch-sum-row"><span>Lote:</span><strong id="sumLote">—</strong></div>
+        <a href="#" id="sumSheetLink" class="batch-sheet-link" target="_blank" style="display:none">📊 Ver Google Sheet →</a>
+      </div>
     </div>
+    <div class="modal-foot"><button class="btn-secondary" onclick="closeBatchOverlay()">Cerrar</button></div>
   </div>
 </div>
 
 <script>
-/* ───── UTILS ───── */
-const $  = id => document.getElementById(id);
-const v  = id => ($( id)?.value?.trim() || '');
-const n  = id => Number($(id)?.value) || 0;
-let _leads = [];
-let _currentPipe = null;
-let _nextAction  = null;
+const API='';
+let selectedLead=null;
 
-function toast(msg, type='') {
-  const a = $('toast-area'), t = document.createElement('div');
-  t.className = 'toast ' + (type === 'ok' ? 'ok' : type === 'err' ? 'err' : '');
-  t.textContent = msg;
-  a.appendChild(t);
-  setTimeout(() => t.remove(), 3800);
+async function checkHealth(){
+  const b=document.getElementById('hdrBadge');
+  try{const r=await fetch(API+'/health');if(r.ok){b.className='badge ok';b.innerHTML='<div class="dot"></div>API Online';}else throw 0;}
+  catch{b.className='badge err';b.innerHTML='<div class="dot"></div>API Offline';}
 }
 
-/* ───── HEALTH ───── */
-async function chkHealth() {
-  try {
-    const d = await api('/health');
-    $('badge').className = 'badge ok';
-    $('badge-txt').textContent = 'API online';
-    toast('Conexión OK', 'ok');
-  } catch(e) {
-    $('badge').className = 'badge err';
-    $('badge-txt').textContent = 'Sin conexión';
-    toast('Sin conexión: ' + e.message, 'err');
-  }
+function openModal(badge,title){
+  document.getElementById('modalBadge').textContent=badge;
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').innerHTML='';
+  document.getElementById('modalFoot').style.display='none';
+  document.getElementById('overlay').classList.add('show');
+}
+function closeOverlay(){document.getElementById('overlay').classList.remove('show');}
+function closeModal(e){if(e.target===document.getElementById('overlay'))closeOverlay();}
+function showModalResult(html){document.getElementById('modalBody').innerHTML=html;document.getElementById('modalFoot').style.display='flex';}
+function showModalLoading(html){document.getElementById('modalBody').innerHTML=html;}
+function scrollTo2(sel){const el=document.querySelector(sel);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
+
+function selectLead(lead){
+  selectedLead=lead;
+  document.querySelectorAll('.lcard').forEach(c=>c.classList.remove('selected'));
+  const card=document.querySelector('.lcard[data-id="'+lead.place_id+'"]');
+  if(card)card.classList.add('selected');
+  const stars=lead.rating?'⭐'.repeat(Math.round(lead.rating)):'—';
+  document.getElementById('leadInfo').innerHTML=`<strong>${lead.name}</strong><span>Rating: ${lead.rating||'—'} ${stars}</span><span>📞 ${lead.phone||'—'}</span><span>📍 ${lead.full_address||'—'}</span>${lead.site?`<span>🌐 <a href="${lead.site}" target="_blank" style="color:var(--blue)">${lead.site}</a></span>`:''}${lead.lote_id?`<div style="margin-top:8px"><span class="tag">${lead.lote_id}</span></div>`:''}`;
+  document.getElementById('btnSeq').style.display='block';
+  ['p2PlaceId','p3PlaceId','p4PlaceId','p5PlaceId','p6PlaceId'].forEach(id=>{document.getElementById(id).value=lead.place_id;});
+  if(lead.site)document.getElementById('p3Url').value=lead.site;
 }
 
-/* ───── API ───── */
-async function api(path, body) {
-  const opts = body
-    ? {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}
-    : {method:'GET'};
-  const r = await fetch(path, opts);
-  if (!r.ok) throw new Error('HTTP ' + r.status + ' en ' + path);
-  return r.json();
+async function runP1(){
+  const query=document.getElementById('p1Query').value.trim();
+  const limit=parseInt(document.getElementById('p1Limit').value)||10;
+  if(!query){alert('Ingresa un término de búsqueda');return;}
+  openModal('P1','Scrapeando Google Maps…');
+  showModalLoading(`<div class="anim-radar"><div class="radar-ring"><div class="radar-sweep"></div><div class="radar-dot">🐆</div></div><div class="anim-label">Buscando: <strong>${query}</strong></div><div class="anim-sub">Esto puede tomar 30-60 segundos…</div></div>`);
+  try{
+    const r=await fetch(API+'/pipeline/p1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,limit})});
+    const data=await r.json();
+    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
+    const leads=data.leads||[];
+    document.getElementById('statsCard').style.display='block';
+    document.getElementById('statsBody').innerHTML=`<strong>${leads.length} leads encontrados</strong><span>Guardados: ${data.guardados}</span>${data.lote_id?`<span>Lote: <span class="tag">${data.lote_id}</span></span>`:''}`;
+    const cardsHtml=leads.map(l=>`<div class="lcard" data-id="${l.place_id}" onclick='selectLead(${JSON.stringify(l)})'><div class="lcard-top"><span class="lcard-name">${l.name}</span><span class="lcard-stars">${l.rating?'⭐ '+l.rating:''}</span></div><div class="lcard-addr">${l.full_address||'—'}</div>${l.site?`<div class="lcard-url">🌐 ${l.site}</div>`:''}</div>`).join('');
+    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">✅</span> ${leads.length} negocios encontrados</div>${data.lote_id?`<div style="margin-bottom:12px;font-size:.82rem;color:var(--muted)">Lote: <span class="tag">${data.lote_id}</span> <button class="btn-batch" style="margin-left:8px" onclick="openBatchForLote('${data.lote_id}')">⚡ Procesar lote</button></div>`:''}<div class="lead-cards">${cardsHtml}</div></div>`);
+    document.getElementById('modalTitle').textContent=leads.length+' leads encontrados';
+  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
 }
 
-async function openRaw(path) {
-  $('raw-title').textContent = path;
-  $('raw-content').textContent = 'Cargando...';
-  $('raw-overlay').classList.add('show');
-  try {
-    const d = await api(path);
-    $('raw-content').textContent = JSON.stringify(d, null, 2);
-  } catch(e) {
-    $('raw-content').textContent = 'Error: ' + e.message;
-  }
-}
-function closeRaw(e) {
-  if (!e || e.target === $('raw-overlay')) $('raw-overlay').classList.remove('show');
-}
-
-/* ───── MODAL ENGINE ───── */
-const CONFIGS = {
-  p1: { badge:'P1', title:'Scraping Google Maps',  loadingHTML: loadingP1, resultFn: renderP1 },
-  p2: { badge:'P2', title:'Obtener Reviews',        loadingHTML: loadingP2, resultFn: renderP2 },
-  p3: { badge:'P3', title:'Analizar Sitio Web',     loadingHTML: loadingP3, resultFn: renderP3 },
-  p4: { badge:'P4', title:'Keypoints con IA',       loadingHTML: loadingP4, resultFn: renderP4 },
-  p5: { badge:'P5', title:'Generar Emails IA',      loadingHTML: loadingP5, resultFn: renderP5 },
-  p6: { badge:'P6', title:'Enviar Email',           loadingHTML: loadingP6, resultFn: renderP6 },
-};
-
-function openModal(pipe) {
-  _currentPipe = pipe;
-  const c = CONFIGS[pipe];
-  $('m-badge').textContent = c.badge;
-  $('m-title').textContent = c.title;
-  showStage('loading');
-  $('stage-loading').innerHTML = c.loadingHTML();
-  $('modal-foot').style.display = 'none';
-  $('m-next-btn').style.display = 'none';
-  $('overlay').classList.add('show');
-}
-function closeModal(e) { if (e.target === $('overlay')) closeModalNow(); }
-function closeModalNow() { $('overlay').classList.remove('show'); }
-function showStage(s) {
-  ['loading','success','error'].forEach(x => $('stage-'+x).classList.remove('active'));
-  $('stage-'+s).classList.add('active');
-}
-function showResult(data, renderFn) {
-  $('stage-success').innerHTML = renderFn(data);
-  showStage('success');
-  $('modal-foot').style.display = 'flex';
-}
-function showError(msg) {
-  $('err-msg').textContent = msg;
-  showStage('error');
-  $('modal-foot').style.display = 'flex';
-}
-function setBusy(id, busy) {
-  const b = $(id);
-  if (!b) return;
-  b.disabled = busy;
-  b.classList.toggle('running', busy);
+async function runP2(){
+  const placeId=document.getElementById('p2PlaceId').value.trim();
+  const maxR=parseInt(document.getElementById('p2Max').value)||10;
+  if(!placeId){alert('Ingresa un Place ID');return;}
+  openModal('P2','Obteniendo reviews…');
+  showModalLoading(`<div class="anim-stars"><div class="star-row">⭐⭐⭐⭐⭐</div><div class="anim-label">Analizando opiniones…</div></div>`);
+  try{
+    const r=await fetch(API+'/pipeline/p2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:placeId,max_reviews:maxR})});
+    const data=await r.json();
+    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
+    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">⭐</span> ${data.reviews_encontradas} reviews obtenidas</div><p style="font-size:.84rem;color:var(--muted)">Guardadas en Supabase: ${data.reviews_guardadas}</p></div>`);
+    document.getElementById('modalTitle').textContent=data.reviews_encontradas+' reviews';
+  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
 }
 
-/* ───── LOADING ANIMATIONS ───── */
-function loadingP1() {
-  return `<div class="anim-radar">
-    <div class="radar-ring"><div class="radar-sweep"></div><div class="radar-dot">📍</div></div>
-    <div class="anim-label">Escaneando Google Maps...</div>
-    <div class="anim-sub">Buscando negocios en tu área</div>
-  </div>`;
-}
-function loadingP2() {
-  return `<div class="anim-stars">
-    <div class="star-row"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
-    <div class="anim-label">Obteniendo reseñas...</div>
-    <div class="anim-sub">Analizando opiniones de clientes</div>
-  </div>`;
-}
-function loadingP3() {
-  return `<div class="anim-scan">
-    <div class="browser-box">
-      <div class="browser-bar">
-        <div class="brdot" style="background:#ef4444"></div>
-        <div class="brdot" style="background:#f59e0b"></div>
-        <div class="brdot" style="background:#10b981"></div>
-      </div>
-      <div class="browser-content">
-        <div class="scan-line"></div><div class="scan-line"></div>
-        <div class="scan-line"></div><div class="scan-line"></div>
-      </div>
-    </div>
-    <div class="anim-label">Analizando el sitio web...</div>
-    <div class="anim-sub">Extrayendo información relevante</div>
-  </div>`;
-}
-function loadingP4() {
-  return `<div class="anim-brain">
-    <div class="brain-icon">🧠</div>
-    <div class="typing-dots"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>
-    <div class="anim-label" style="margin-top:14px">IA procesando el lead...</div>
-    <div class="anim-sub">Generando keypoints personalizados</div>
-  </div>`;
-}
-function loadingP5() {
-  return `<div class="anim-type">
-    <div class="email-icon">✉️</div>
-    <div class="type-bar">
-      <span class="tbar"></span><span class="tbar"></span><span class="tbar"></span>
-      <span class="tbar"></span><span class="tbar"></span>
-    </div>
-    <div class="anim-label" style="margin-top:14px">Redactando emails personalizados...</div>
-    <div class="anim-sub">GPT-4 escribiendo la secuencia</div>
-  </div>`;
-}
-function loadingP6() {
-  return `<div class="anim-send">
-    <div class="plane-icon">🚀</div>
-    <div class="anim-label" style="margin-top:12px">Enviando email via Brevo...</div>
-    <div class="anim-sub">Preparando la entrega</div>
-  </div>`;
+async function runP3(){
+  const placeId=document.getElementById('p3PlaceId').value.trim();
+  const url=document.getElementById('p3Url').value.trim();
+  if(!placeId||!url){alert('Ingresa Place ID y URL');return;}
+  openModal('P3','Analizando sitio web…');
+  showModalLoading(`<div class="anim-scan"><div class="browser-box"><div class="browser-bar"><div class="brdot" style="background:#ef4444"></div><div class="brdot" style="background:#f59e0b"></div><div class="brdot" style="background:#10b981"></div></div><div class="browser-content"><div class="scan-line"></div><div class="scan-line"></div><div class="scan-line"></div><div class="scan-line"></div></div></div><div class="anim-label">Escaneando: ${url}</div></div>`);
+  try{
+    const r=await fetch(API+'/pipeline/p3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:placeId,url})});
+    const data=await r.json();
+    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
+    const res=data.resultado||{};
+    const items=Object.entries(res).filter(([k])=>k!=='place_id').map(([k,v])=>`<div class="aitem"><div class="aitem-lbl">${k}</div><div class="aitem-val">${v??'—'}</div></div>`).join('');
+    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">🌐</span> Análisis completado</div><div class="analysis-grid">${items}</div></div>`);
+    document.getElementById('modalTitle').textContent='Análisis web OK';
+  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
 }
 
-/* ───── RESULT RENDERERS ───── */
-function renderP1(data) {
-  const leads = data.leads || [];
-  if (!leads.length) return `<div class="result-err"><div class="result-hd"><span class="icon">⚠️</span>Sin resultados</div><p style="font-size:.84rem;color:var(--muted)">No se encontraron leads con esa búsqueda.</p></div>`;
-  let html = `<div class="result-ok"><div class="result-hd"><span class="icon">✅</span><span>${leads.length} leads encontrados</span></div></div><div class="lead-cards" style="margin-top:14px">`;
-  leads.forEach(l => {
-    const stars = l.rating ? '⭐'.repeat(Math.round(l.rating)) + ' ' + l.rating : '';
-    html += `<div class="lcard" onclick="pickLead('${l.place_id}',this)" data-id="${l.place_id}">
-      <div class="lcard-top"><span class="lcard-name">${l.name||'Sin nombre'}</span><span class="lcard-stars">${stars}</span></div>
-      <div class="lcard-addr">${l.full_address||''}</div>
-      ${l.site?`<div class="lcard-url">🔗 ${l.site}</div>`:''}
-    </div>`;
-  });
-  return html + '</div>';
+async function runP4(){
+  const placeId=document.getElementById('p4PlaceId').value.trim();
+  if(!placeId){alert('Ingresa un Place ID');return;}
+  openModal('P4','Generando análisis IA…');
+  showModalLoading(`<div class="anim-brain"><div class="brain-icon">🧠</div><div class="anim-label">IA analizando el negocio…</div><div class="typing-dots"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`);
+  try{
+    const r=await fetch(API+'/pipeline/p4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:placeId})});
+    const data=await r.json();
+    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
+    const res=data.resultado||{};
+    const score=res.lead_score||0;
+    const temp=score>=70?'🔥 Caliente':score>=40?'🟡 Tibio':'❄️ Frío';
+    const kps=(res.keypoints||[]).map(k=>`<li><span class="kp-bullet">›</span>${k}</li>`).join('');
+    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">🧠</span> Keypoints generados</div><div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="aitem" style="flex:1"><div class="aitem-lbl">Lead Score</div><div class="aitem-val" style="font-size:1.4rem;font-weight:800">${score}</div></div><div class="aitem" style="flex:1"><div class="aitem-lbl">Temperatura</div><div class="aitem-val">${temp}</div></div></div>${res.problema_principal?`<div class="aitem" style="margin-bottom:10px"><div class="aitem-lbl">Problema principal</div><div class="aitem-val">${res.problema_principal}</div></div>`:''}${res.oportunidad?`<div class="aitem" style="margin-bottom:14px"><div class="aitem-lbl">Oportunidad</div><div class="aitem-val">${res.oportunidad}</div></div>`:''}${kps?`<ul class="kp-list">${kps}</ul>`:''}</div>`);
+    document.getElementById('modalTitle').textContent='Score: '+score+' '+temp;
+  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
 }
 
-function renderP2(data) {
-  const reviews = data.reviews || [];
-  if (!reviews.length) return `<div class="result-ok"><div class="result-hd"><span class="icon">✅</span>Sin reseñas disponibles</div><p style="color:var(--muted);font-size:.84rem">Este negocio no tiene reseñas públicas o el servicio no está configurado.</p></div>`;
-  let html = `<div class="result-ok"><div class="result-hd"><span class="icon">✅</span>${reviews.length} reseñas obtenidas</div></div><div style="margin-top:14px">`;
-  reviews.slice(0,5).forEach(r => {
-    const stars = '⭐'.repeat(Math.min(r.rating||0,5));
-    html += `<div class="rev-card"><div class="rev-author">${r.author_name||'Anónimo'}</div><div class="rev-stars">${stars}</div><div class="rev-text">${r.text||'Sin texto'}</div></div>`;
-  });
-  return html + '</div>';
+async function runP5(){
+  const placeId=document.getElementById('p5PlaceId').value.trim();
+  if(!placeId){alert('Ingresa un Place ID');return;}
+  openModal('P5','Generando secuencia de emails…');
+  showModalLoading(`<div class="anim-type"><div class="email-icon">✉️</div><div class="anim-label">IA redactando emails…</div><div class="type-bar"><div class="tbar"></div><div class="tbar"></div><div class="tbar"></div><div class="tbar"></div><div class="tbar"></div></div></div>`);
+  try{
+    const r=await fetch(API+'/pipeline/p5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:placeId})});
+    const data=await r.json();
+    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
+    const emails=data.emails||[];
+    const emailsHtml=emails.map((em,i)=>`<div class="email-prev"><div class="email-prev-hdr"><strong>Email ${i+1}: ${em.subject||em.asunto||'—'}</strong>Día ${em.day||em.dia||i+1}</div><div class="email-prev-body">${em.body||em.cuerpo||'—'}</div></div>`).join('');
+    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">✉️</span> ${emails.length} emails generados</div>${emailsHtml}</div>`);
+    document.getElementById('modalTitle').textContent=emails.length+' emails listos';
+  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
 }
 
-function renderP3(data) {
-  const r = data.resultado || data || {};
-  const fields = [
-    ['🏷️ Nombre','name'],['📍 Dirección','address'],
-    ['📞 Teléfono','phone'],['🌐 URL analizada','url'],
-    ['📝 Descripción','description'],['💼 Servicios','services'],
-  ];
-  let html = `<div class="result-ok"><div class="result-hd"><span class="icon">✅</span>Sitio analizado</div></div><div class="analysis-grid" style="margin-top:14px">`;
-  fields.forEach(([lbl,key]) => {
-    const val = r[key];
-    if (!val) return;
-    html += `<div class="aitem"><div class="aitem-lbl">${lbl}</div><div class="aitem-val">${val}</div></div>`;
-  });
-  html += '</div>';
-  if (r.raw_text) html += `<div style="margin-top:12px;padding:12px;background:var(--s2);border-radius:10px;border:1px solid var(--border);font-size:.78rem;color:var(--muted);max-height:150px;overflow-y:auto">${r.raw_text.slice(0,600)}${r.raw_text.length>600?'...':''}</div>`;
-  return html;
+async function runP6(){
+  const placeId=document.getElementById('p6PlaceId').value.trim();
+  const toEmail=document.getElementById('p6Email').value.trim();
+  if(!placeId){alert('Ingresa un Place ID');return;}
+  openModal('P6','Enviando emails…');
+  showModalLoading(`<div class="anim-send"><div class="plane-icon">✈️</div><div class="anim-label">Enviando secuencia de emails…</div><div class="anim-sub">Conectando con Brevo…</div></div>`);
+  try{
+    const body={place_id:placeId};if(toEmail)body.to_email=toEmail;
+    const r=await fetch(API+'/pipeline/p6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await r.json();
+    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
+    showModalResult(`<div class="result-ok"><div class="send-success"><div class="send-icon">🎉</div><h3>¡Emails enviados!</h3><p>${data.enviados||0} email(s) en la secuencia</p>${toEmail?`<p style="margin-top:6px">Destino: <strong>${toEmail}</strong></p>`:''}</div></div>`);
+    document.getElementById('modalTitle').textContent='¡Enviado!';
+  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
 }
 
-function renderP4(data) {
-  const r = data.resultado || data;
-  const kps = r.keypoints || r.puntos_clave || [];
-  if (!kps.length) {
-    const txt = r.raw || JSON.stringify(r,null,2);
-    return `<div class="result-ok"><div class="result-hd"><span class="icon">✅</span>Keypoints generados</div></div><div style="margin-top:14px;font-size:.84rem;line-height:1.7;color:var(--txt);white-space:pre-wrap">${txt}</div>`;
-  }
-  let html = `<div class="result-ok"><div class="result-hd"><span class="icon">🧠</span>${kps.length} keypoints generados</div></div><ul class="kp-list" style="margin-top:14px">`;
-  kps.forEach(k => { html += `<li><span class="kp-bullet">◆</span><span>${k}</span></li>`; });
-  return html + '</ul>';
+async function runSequence(){
+  if(!selectedLead)return;
+  const placeId=selectedLead.place_id;
+  const url=selectedLead.site||'';
+  openModal('SEQ','Procesando '+selectedLead.name+'…');
+  showModalLoading(`<div class="anim-brain"><div class="brain-icon">⚡</div><div class="anim-label">Ejecutando P2 → P3 → P4 → P5…</div><div class="typing-dots"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`);
+  try{
+    const r=await fetch(API+'/pipeline/sequence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:placeId,url,max_reviews:10})});
+    const data=await r.json();
+    const stepHtml=(key,label)=>{const s=data[key];if(!s)return'';const icon=s.status==='ok'?'✅':s.status==='skipped'?'⏭️':'❌';return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem"><span>${icon}</span><strong>${label}</strong><span style="color:var(--muted);margin-left:auto">${s.status}</span></div>`;};
+    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">⚡</span> Secuencia completada</div>${stepHtml('p2','P2 Reviews')}${stepHtml('p3','P3 Web')}${stepHtml('p4','P4 Keypoints')}${stepHtml('p5','P5 Emails')}</div>`);
+    document.getElementById('modalTitle').textContent='Secuencia OK';
+  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
 }
 
-function renderP5(data) {
-  const emails = data.emails || [];
-  if (!emails.length) return `<div class="result-err"><div class="result-hd"><span class="icon">⚠️</span>Sin emails generados</div></div>`;
-  let html = `<div class="result-ok"><div class="result-hd"><span class="icon">✉️</span>${emails.length} emails generados</div></div>`;
-  emails.forEach((em,i) => {
-    html += `<div class="email-prev" style="margin-top:14px">
-      <div class="email-prev-hdr"><span>Email ${i+1}</span><strong>${em.subject||em.asunto||'Sin asunto'}</strong></div>
-      <div class="email-prev-body">${em.body||em.cuerpo||em.content||JSON.stringify(em,null,2)}</div>
-    </div>`;
-  });
-  return html;
+function toggleLotes(){
+  const panel=document.getElementById('lotesPanel');
+  const btn=document.getElementById('btnVerLotes');
+  if(panel.classList.contains('show')){panel.classList.remove('show');btn.classList.remove('active');}
+  else{panel.classList.add('show');btn.classList.add('active');loadLotes();}
 }
 
-function renderP6(data) {
-  if (data.status === 'ok' || data.sent) {
-    return `<div class="send-success">
-      <div class="send-icon">🎉</div>
-      <h3>¡Email enviado!</h3>
-      <p>El email fue entregado exitosamente via Brevo.</p>
-      ${data.message_id?`<p style="margin-top:6px;font-size:.75rem;color:var(--muted)">ID: ${data.message_id}</p>`:''}
-    </div>`;
-  }
-  return `<div class="result-ok"><div class="result-hd"><span class="icon">✅</span>Pipeline P6 completado</div><pre style="font-size:.78rem;color:var(--muted);margin-top:10px">${JSON.stringify(data,null,2)}</pre></div>`;
+async function loadLotes(){
+  const grid=document.getElementById('lotesGrid');
+  grid.innerHTML='<div style="color:var(--muted);font-size:.85rem;padding:12px 0">Cargando…</div>';
+  try{
+    const r=await fetch(API+'/lotes');
+    const lotes=await r.json();
+    if(!lotes.length){grid.innerHTML='<div style="color:var(--muted);font-size:.85rem;padding:12px 0">No hay lotes todavía. Ejecuta P1 primero.</div>';return;}
+    grid.innerHTML=lotes.map(l=>`<div class="lote-card"><div class="lote-id">${l.lote_id}</div><div class="lote-query">🔍 ${l.query||'—'}</div><div class="lote-meta"><span class="lote-count">${l.count} leads</span><button class="btn-batch" onclick="openBatchForLote('${l.lote_id}')">⚡ Procesar</button></div></div>`).join('');
+  }catch(err){grid.innerHTML=`<div style="color:var(--red);font-size:.85rem">${err.message}</div>`;}
 }
 
-/* ───── LEAD PICKER en MODAL ───── */
-let _selectedInModal = null;
-function pickLead(place_id, el) {
-  document.querySelectorAll('.lcard').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  _selectedInModal = place_id;
-  const lead = _leads.find(l => l.place_id === place_id);
-  if (lead) {
-    // Pre-fill selector en sidebar
-    fillSelector([..._leads]);
-    $('lead-sel').value = place_id;
-    selectLead(place_id);
-  }
-  $('m-next-btn').style.display = 'inline-flex';
-  $('m-next-btn').textContent = 'Continuar con P2 →';
-  _nextAction = () => { closeModalNow(); setTimeout(runP2, 200); };
+function openBatchForLote(loteId){
+  document.getElementById('batchTitle').textContent='Lote: '+loteId;
+  document.getElementById('batchProgFill').style.width='0%';
+  document.getElementById('batchProgTxt').textContent='Iniciando batch…';
+  document.getElementById('batchLeadsList').innerHTML='<div style="color:var(--muted);font-size:.84rem;padding:8px 0">Cargando leads…</div>';
+  document.getElementById('batchSummary').classList.remove('show');
+  document.getElementById('batchOverlay').classList.add('show');
+  runBatch(loteId);
 }
 
-function modalNext() {
-  if (_nextAction) _nextAction();
-}
+function closeBatchOverlay(){document.getElementById('batchOverlay').classList.remove('show');}
+function closeBatchModal(e){if(e.target===document.getElementById('batchOverlay'))closeBatchOverlay();}
 
-/* ───── SIDEBAR + CARD LEAD SELECTOR ───── */
-function fillSelector(leads) {
-  _leads = leads || [];
-  // Últimos 5 para el historial de las cards
-  const recent = _leads.slice(0, 5);
-  const opts = '<option value="">— elige un lead —</option>' +
-    recent.map(l =>
-      `<option value="${l.place_id}">${l.name || l.place_id}${l.rating ? ' · ' + l.rating + '★' : ''}</option>`
-    ).join('');
-  // Sidebar
-  $('lead-sel').innerHTML = opts;
-  // Cards P2-P6
-  ['p2-place_id','p3-place_id','p4-place_id','p5-place_id','p6-place_id'].forEach(id => {
-    const el = $(id);
-    if (el && el.tagName === 'SELECT') el.innerHTML = opts;
-  });
-}
-
-function syncLeadFromCard(place_id) {
-  if (!place_id) return;
-  // Sincronizar todos los selects
-  ['lead-sel','p2-place_id','p3-place_id','p4-place_id','p5-place_id','p6-place_id'].forEach(id => {
-    const el = $(id);
-    if (el) el.value = place_id;
-  });
-  selectLead(place_id);
-}
-
-function selectLead(place_id) {
-  const l = _leads.find(x => x.place_id === place_id);
-  const info = $('lead-info');
-  if (!l) { info.innerHTML = '<em>Sin lead seleccionado</em>'; return; }
-  info.innerHTML = `<strong>${l.name||'Sin nombre'}</strong>
-    ${l.full_address ? l.full_address + '<br>' : ''}
-    ${l.rating ? '<span class="tag">⭐ ' + l.rating + '</span>' : ''}
-    ${l.reviews_count ? '<span class="tag">💬 ' + l.reviews_count + '</span>' : ''}
-    ${l.phone ? '<span class="tag">📞 ' + l.phone + '</span>' : ''}
-    ${l.site ? `<br><a href="${l.site}" target="_blank" style="color:var(--blue);font-size:.79rem;margin-top:5px;display:inline-block">${l.site}</a>` : ''}`;
-  if (l.site) $('seq-url').value = l.site;
-  ['p2','p3','p4','p5','p6'].forEach(p => {
-    const el = $(p + '-place_id');
-    if (el) el.value = place_id;
-  });
-  // Sidebar también
-  const ss = $('lead-sel'); if (ss) ss.value = place_id;
-  // p3-url
-  if (l.site) { const u = $('p3-url'); if (u) u.value = l.site; }
-}
-
-/* ───── PIPELINE RUNNERS ───── */
-async function runP1() {
-  const body = { query: v('p1-query') || 'negocios Ciudad de México', limit: n('p1-limit') || 20 };
-  openModal('p1');
-  setBusy('btn-p1', true);
-  try {
-    const d = await api('/pipeline/p1', body);
-    if (d.leads?.length) fillSelector(d.leads);
-    showResult(d, renderP1);
-    toast('P1: ' + (d.leads?.length || 0) + ' leads', 'ok');
-  } catch(e) { showError(e.message); toast('Error P1: ' + e.message, 'err'); }
-  finally { setBusy('btn-p1', false); }
-}
-
-async function runP2() {
-  const pid = v('p2-place_id') || ($('lead-sel').value);
-  if (!pid) { toast('Selecciona un lead o ingresa place_id', 'err'); return; }
-  $('p2-place_id').value = pid;
-  openModal('p2');
-  setBusy('btn-p2', true);
-  try {
-    const d = await api('/pipeline/p2', { place_id: pid, max_reviews: n('p2-max') || 10 });
-    showResult(d, renderP2);
-    toast('P2: ' + (d.reviews_encontradas||0) + ' reviews', 'ok');
-    $('m-next-btn').style.display = 'inline-flex';
-    $('m-next-btn').textContent = 'Continuar con P3 →';
-    _nextAction = () => { closeModalNow(); setTimeout(runP3, 200); };
-  } catch(e) { showError(e.message); toast('Error P2: ' + e.message, 'err'); }
-  finally { setBusy('btn-p2', false); }
-}
-
-async function runP3() {
-  const pid = v('p3-place_id') || ($('lead-sel').value);
-  const url = v('p3-url') || v('seq-url');
-  if (!pid) { toast('Selecciona un lead', 'err'); return; }
-  if (!url) { toast('Ingresa la URL del sitio', 'err'); return; }
-  $('p3-place_id').value = pid; $('p3-url').value = url;
-  openModal('p3');
-  setBusy('btn-p3', true);
-  try {
-    const d = await api('/pipeline/p3', { place_id: pid, url });
-    showResult(d, renderP3);
-    toast('P3: análisis completado', 'ok');
-    $('m-next-btn').style.display = 'inline-flex';
-    $('m-next-btn').textContent = 'Continuar con P4 →';
-    _nextAction = () => { closeModalNow(); setTimeout(runP4, 200); };
-  } catch(e) { showError(e.message); toast('Error P3: ' + e.message, 'err'); }
-  finally { setBusy('btn-p3', false); }
-}
-
-async function runP4() {
-  const pid = v('p4-place_id') || ($('lead-sel').value);
-  if (!pid) { toast('Selecciona un lead', 'err'); return; }
-  $('p4-place_id').value = pid;
-  openModal('p4');
-  setBusy('btn-p4', true);
-  try {
-    const d = await api('/pipeline/p4', { place_id: pid });
-    showResult(d, renderP4);
-    toast('P4: keypoints generados', 'ok');
-    $('m-next-btn').style.display = 'inline-flex';
-    $('m-next-btn').textContent = 'Continuar con P5 →';
-    _nextAction = () => { closeModalNow(); setTimeout(runP5, 200); };
-  } catch(e) { showError(e.message); toast('Error P4: ' + e.message, 'err'); }
-  finally { setBusy('btn-p4', false); }
-}
-
-async function runP5() {
-  const pid = v('p5-place_id') || ($('lead-sel').value);
-  if (!pid) { toast('Selecciona un lead', 'err'); return; }
-  $('p5-place_id').value = pid;
-  openModal('p5');
-  setBusy('btn-p5', true);
-  try {
-    const d = await api('/pipeline/p5', { place_id: pid });
-    showResult(d, renderP5);
-    toast('P5: ' + (d.emails_generados||0) + ' emails generados', 'ok');
-    $('m-next-btn').style.display = 'inline-flex';
-    $('m-next-btn').textContent = 'Continuar con P6 →';
-    _nextAction = () => { closeModalNow(); setTimeout(runP6, 200); };
-  } catch(e) { showError(e.message); toast('Error P5: ' + e.message, 'err'); }
-  finally { setBusy('btn-p5', false); }
-}
-
-async function runP6() {
-  const pid = v('p6-place_id') || ($('lead-sel').value);
-  if (!pid) { toast('Selecciona un lead', 'err'); return; }
-  $('p6-place_id').value = pid;
-  openModal('p6');
-  setBusy('btn-p6', true);
-  try {
-    const body = { place_id: pid, to_email: v('p6-email') || null, to_name: v('p6-name') || null };
-    const d = await api('/pipeline/p6', body);
-    showResult(d, renderP6);
-    if (d.status === 'ok' || d.sent) toast('✉️ Email enviado!', 'ok');
-    else toast('P6 completado', 'ok');
-  } catch(e) { showError(e.message); toast('Error P6: ' + e.message, 'err'); }
-  finally { setBusy('btn-p6', false); }
-}
-
-/* ───── SEQUENCE ───── */
-async function runSequence() {
-  const pid = $('lead-sel').value;
-  const url = v('seq-url');
-  if (!pid) { toast('Selecciona un lead primero', 'err'); return; }
-  if (!url) { toast('Ingresa la URL del sitio', 'err'); return; }
-  ['p2','p3','p4','p5','p6'].forEach(p => { const e = $(p+'-place_id'); if(e) e.value = pid; });
-  $('p3-url').value = url;
-  // Wizard automático
-  openModal('p2');
-  $('stage-loading').innerHTML = loadingP2();
-  showStage('loading');
-  try {
-    const d = await api('/pipeline/sequence', { place_id: pid, url, max_reviews: 10 });
-    // Mostrar resumen
-    const ok = Object.entries(d).filter(([k,v]) => v?.status==='ok').map(([k])=>k.toUpperCase()).join(', ');
-    $('m-title').textContent = 'Secuencia completa';
-    $('m-badge').textContent = 'P2→P5';
-    $('stage-success').innerHTML = `<div class="result-ok"><div class="result-hd"><span class="icon">🎉</span>Secuencia completada</div></div>
-      <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
-      ${['p2','p3','p4','p5'].map(p=>{
-        const pd = d[p]; if(!pd) return '';
-        const ok = pd.status==='ok';
-        return `<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;background:var(--s2);border:1px solid ${ok?'rgba(16,185,129,.25)':'rgba(239,68,68,.25)'}">
-          <span>${ok?'✅':'❌'}</span>
-          <span style="font-weight:600;font-size:.88rem">${p.toUpperCase()}</span>
-          <span style="font-size:.8rem;color:var(--muted)">${ok?'Completado':(pd.error||'Error')}</span>
-        </div>`;
-      }).join('')}
-      </div>`;
-    showStage('success');
-    $('modal-foot').style.display = 'flex';
-    toast('Secuencia completa', 'ok');
-  } catch(e) { showError(e.message); toast('Error secuencia: ' + e.message, 'err'); }
-}
-
-/* ───── LOAD ALL LEADS ───── */
-async function loadAllLeads() {
-  try {
-    const d = await api('/test-db');
-    const leads = Array.isArray(d?.datos) ? d.datos : [];
-    if (leads.length) {
-      fillSelector(leads);
-      toast(leads.length + ' leads cargados de DB', 'ok');
-    } else {
-      toast('No hay leads en DB', '');
+async function runBatch(loteId){
+  const leadsList=document.getElementById('batchLeadsList');
+  const progFill=document.getElementById('batchProgFill');
+  const progTxt=document.getElementById('batchProgTxt');
+  let leads=[];
+  try{
+    const r=await fetch(API+'/lotes');
+    const lotes=await r.json();
+    const lote=lotes.find(l=>l.lote_id===loteId);
+    if(lote){
+      leads=lote.place_ids.map(pid=>({place_id:pid,name:pid}));
+      leadsList.innerHTML=leads.map(l=>{const sid=l.place_id.replace(/[^a-z0-9]/gi,'_');return`<div class="batch-lead-row" id="brow-${sid}"><div class="batch-lead-top"><span class="batch-lead-name">${l.name}</span></div><div class="batch-steps"><span class="step-badge" id="bstep-${sid}-p2">P2</span><span class="step-badge" id="bstep-${sid}-p3">P3</span><span class="step-badge" id="bstep-${sid}-p4">P4</span><span class="step-badge" id="bstep-${sid}-p5">P5</span></div></div>`;}).join('');
     }
-    $('sys-info').innerHTML = `<span class="tag">DB ✓</span> ${leads.length} leads<br><small style="color:var(--muted);margin-top:5px;display:block">Actualizado: ${new Date().toLocaleTimeString('es-MX')}</small>`;
-  } catch(e) {
-    $('sys-info').innerHTML = `<span style="color:var(--red)">⚠ DB sin conexión</span>`;
-    toast('Error DB: ' + e.message, 'err');
-  }
+  }catch(_){}
+  progTxt.textContent='Procesando '+leads.length+' leads…';
+  try{
+    const r=await fetch(API+'/pipeline/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lote_id:loteId})});
+    const data=await r.json();
+    if(data.error){progTxt.textContent='❌ '+data.error;return;}
+    const results=data.results||[];
+    results.forEach((res,idx)=>{
+      const sid=res.place_id.replace(/[^a-z0-9]/gi,'_');
+      const row=document.getElementById('brow-'+sid);
+      if(row)row.querySelector('.batch-lead-name').textContent=res.name||res.place_id;
+      ['p2','p3','p4','p5'].forEach(step=>{
+        const badge=document.getElementById('bstep-'+sid+'-'+step);
+        if(!badge)return;
+        const s=res.steps[step];if(!s)return;
+        badge.classList.remove('running');
+        if(s.status==='ok'){badge.classList.add('ok');badge.textContent=step.toUpperCase()+(step==='p2'&&s.reviews?' ✅ '+s.reviews:step==='p4'&&s.score?' '+s.score:' ✅');}
+        else if(s.status==='skipped'){badge.classList.add('skip');badge.textContent=step.toUpperCase()+' —';}
+        else{badge.classList.add('err');badge.textContent=step.toUpperCase()+' ❌';}
+      });
+      const pct=Math.round(((idx+1)/results.length)*100);
+      progFill.style.width=pct+'%';
+      progTxt.textContent=(idx+1)+'/'+results.length+' leads procesados';
+    });
+    progFill.style.width='100%';
+    progTxt.textContent='✅ Completado — '+data.completados_ok+'/'+data.total_leads+' OK';
+    document.getElementById('sumTotal').textContent=data.total_leads;
+    document.getElementById('sumOk').textContent=data.completados_ok;
+    document.getElementById('sumLote').textContent=loteId;
+    if(data.sheet_url){const link=document.getElementById('sumSheetLink');link.href=data.sheet_url;link.style.display='inline-flex';}
+    document.getElementById('batchSummary').classList.add('show');
+  }catch(err){progTxt.textContent='❌ Error: '+err.message;}
 }
 
-/* ───── INIT ───── */
-chkHealth();
-loadAllLeads();
+checkHealth();
 </script>
 </body>
 </html>
