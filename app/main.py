@@ -6,7 +6,7 @@ from typing import Optional
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -99,6 +99,20 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/sheets/ping")
+async def sheets_ping():
+    """Verifica la conexión con Google Sheets sin modificar datos."""
+    try:
+        from app.utils.google_sheets import get_sheet_url, _get_client
+        client = _get_client()
+        if not client:
+            return {"status": "error", "detail": "No se pudo crear el cliente de Google Sheets. Revisa GOOGLE_SHEETS_CREDENTIALS y GOOGLE_SHEET_ID."}
+        url = await get_sheet_url()
+        return {"status": "ok", "sheet_url": url}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
+
 @app.get("/debug")
 async def debug():
     # No exponer secretos: solo indicar si la configuración está cargada
@@ -147,14 +161,28 @@ async def ejecutar_batch(body: BatchBody):
 
 
 @app.post("/pipeline/p1")
-async def ejecutar_p1(body: P1Body):
+async def ejecutar_p1(body: P1Body, background_tasks: BackgroundTasks):
+    """
+    Scrape Google Maps y lanza el pipeline completo (P2→P6) en segundo plano.
+    Responde inmediatamente con el lote_id y los leads encontrados.
+    El Google Sheet se va llenando solo en tiempo real mientras el pipeline trabaja.
+    """
     resultados = await scrape_google_maps(query=body.query, limit=body.limit)
     resultado = await procesar_y_guardar_leads(resultados, query=body.query)
+
+    lote_id = resultado.get("lote_id", "") if isinstance(resultado, dict) else ""
+
+    # Lanzar P2→P6 automáticamente en background para todo el lote
+    if lote_id:
+        background_tasks.add_task(process_lote, lote_id)
+
     return {
         "status": "ok",
+        "message": f"Lote '{lote_id}' creado. Pipeline P2→P6 corriendo en segundo plano. Revisa el Google Sheet para ver el progreso en tiempo real.",
         "encontrados": len(resultados),
         "guardados": resultado.get("guardados", 0) if isinstance(resultado, dict) else resultado,
-        "lote_id": resultado.get("lote_id", "") if isinstance(resultado, dict) else "",
+        "lote_id": lote_id,
+        "sheet_url": f"https://docs.google.com/spreadsheets/d/1hgNERuux2eZ1MDv-tgCDp_qva-fqf1RHF9Qu4Qysjjg/edit",
         "leads": resultados,
     }
 

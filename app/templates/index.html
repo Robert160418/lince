@@ -279,10 +279,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
       <div class="batch-prog-txt" id="batchProgTxt">Iniciando…</div>
       <div class="batch-leads" id="batchLeadsList"></div>
       <div class="batch-summary" id="batchSummary">
-        <div class="batch-sum-row"><span>Leads procesados:</span><strong id="sumTotal">—</strong></div>
-        <div class="batch-sum-row"><span>Completados OK:</span><strong id="sumOk">—</strong></div>
-        <div class="batch-sum-row"><span>Lote:</span><strong id="sumLote">—</strong></div>
-        <a href="#" id="sumSheetLink" class="batch-sheet-link" target="_blank" style="display:none">📊 Ver Google Sheet →</a>
+        <div class="batch-sum-row"><span>Total leads:</span><strong id="sumTotal">—</strong></div>
+        <div class="batch-sum-row"><span>✅ Completados:</span><strong id="sumOk">—</strong></div>
+        <div class="batch-sum-row"><span>🔥 Calientes:</span><strong id="sumCalientes" style="color:#ef4444">—</strong></div>
+        <div class="batch-sum-row"><span>🟡 Tibios:</span><strong id="sumTibios" style="color:#ca8a04">—</strong></div>
+        <div class="batch-sum-row"><span>✉️ Emails enviados:</span><strong id="sumEnviados" style="color:#10b981">—</strong></div>
+        <div class="batch-sum-row"><span>Lote:</span><strong id="sumLote" style="font-size:.78rem;font-family:monospace">—</strong></div>
+        <a href="#" id="sumSheetLink" class="batch-sheet-link" target="_blank" style="display:none">📊 Ver Google Sheet en tiempo real →</a>
       </div>
     </div>
     <div class="modal-foot"><button class="btn-secondary" onclick="closeBatchOverlay()">Cerrar</button></div>
@@ -338,8 +341,10 @@ async function runP1(){
     document.getElementById('statsCard').style.display='block';
     document.getElementById('statsBody').innerHTML=`<strong>${leads.length} leads encontrados</strong><span>Guardados: ${data.guardados}</span>${data.lote_id?`<span>Lote: <span class="tag">${data.lote_id}</span></span>`:''}`;
     const cardsHtml=leads.map(l=>`<div class="lcard" data-id="${l.place_id}" onclick='selectLead(${JSON.stringify(l)})'><div class="lcard-top"><span class="lcard-name">${l.name}</span><span class="lcard-stars">${l.rating?'⭐ '+l.rating:''}</span></div><div class="lcard-addr">${l.full_address||'—'}</div>${l.site?`<div class="lcard-url">🌐 ${l.site}</div>`:''}</div>`).join('');
-    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">✅</span> ${leads.length} negocios encontrados</div>${data.lote_id?`<div style="margin-bottom:12px;font-size:.82rem;color:var(--muted)">Lote: <span class="tag">${data.lote_id}</span> <button class="btn-batch" style="margin-left:8px" onclick="openBatchForLote('${data.lote_id}')">⚡ Procesar lote</button></div>`:''}<div class="lead-cards">${cardsHtml}</div></div>`);
-    document.getElementById('modalTitle').textContent=leads.length+' leads encontrados';
+    const sheetHtml=data.sheet_url?`<a class="batch-sheet-link" href="${data.sheet_url}" target="_blank">📊 Ver Google Sheet en tiempo real →</a>`:'';
+    const pipelineHtml=data.lote_id?`<div style="background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px 14px;margin-bottom:12px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:1.1rem">🚀</span><strong style="font-size:.88rem">Pipeline P2→P6 corriendo en background</strong></div><div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">El sistema está procesando automáticamente los ${leads.length} leads. Reviews → Web → IA → Emails → Envío.</div>${sheetHtml}</div>`:''
+    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">✅</span> ${leads.length} negocios encontrados</div>${pipelineHtml}<div class="lead-cards">${cardsHtml}</div></div>`);
+    document.getElementById('modalTitle').textContent='🚀 '+leads.length+' leads — pipeline corriendo';
   }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
 }
 
