@@ -521,4 +521,12 @@ async function runBatch(loteId){
     document.getElementById('sumTibios').textContent=data.tibios??'—';
     document.getElementById('sumEnviados').textContent=data.enviados??'—';
     document.getElementById('sumLote').textContent=loteId;
-    if(data.sheet_url){const link=document.getElementById('sumSheetLink');link.href=
+    if(data.sheet_url){const link=document.getElementById('sumSheetLink');link.href=data.sheet_url;link.style.display='inline-flex';}
+    document.getElementById('batchSummary').classList.add('show');
+  }catch(err){progTxt.textContent='❌ Error: '+err.message;}
+}
+
+checkHealth();
+</script>
+</body>
+</html>
