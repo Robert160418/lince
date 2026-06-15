@@ -20,9 +20,17 @@ async def generar_secuencia_emails(place_id: str) -> dict:
     # Extraer datos de keypoints (están en jsonb)
     painpoints = kp.get("painpoints_and_opportunities", {}) or {}
     kp_personalization = kp.get("keypoints_for_personalization", {}) or {}
+    servicios = kp.get("servicios_recomendados", []) or []
+    servicio_principal = kp_personalization.get("servicio_principal", "")
+
+    servicios_txt = (
+        "\n".join(f"  - {s}" for s in servicios)
+        if servicios else "  - Marketing digital integral"
+    )
 
     prompt = f"""
 Eres un experto en cold email marketing para agencias de marketing digital en Ecuador y Latinoamérica.
+La agencia se llama NoBo Web (noboweb.com) y ofrece servicios de marketing digital y desarrollo web.
 Genera una secuencia de 5 emails para contactar a este negocio.
 
 NEGOCIO: {lead.get('name', 'N/A')}
@@ -33,9 +41,14 @@ INSTAGRAM: {lead.get('company_instagram', 'No tiene')}
 PROBLEMA PRINCIPAL: {painpoints.get('problema_principal', 'N/A')}
 OPORTUNIDAD: {painpoints.get('oportunidad', 'N/A')}
 ARGUMENTO DE VENTA: {kp_personalization.get('argumento_venta', 'N/A')}
+SERVICIO PRINCIPAL RECOMENDADO: {servicio_principal or 'Marketing digital'}
+SERVICIOS RECOMENDADOS PARA ESTE NEGOCIO:
+{servicios_txt}
 
 Genera 5 emails en JSON. Cada email debe ser conversacional, directo, máximo 120 palabras.
 NO uses saludos genéricos. Menciona el nombre del negocio específicamente.
+Firma siempre como parte del equipo de NoBo Web (noboweb.com).
+En los emails menciona los servicios recomendados de forma natural, empezando por el servicio principal.
 
 Formato exacto:
 {{
@@ -68,11 +81,11 @@ Formato exacto:
   ]
 }}
 
-Día 1: Introducción personalizada con propuesta de valor específica
-Día 2: Caso de éxito de negocio similar en Ecuador/LATAM
-Día 3: Pregunta directa sobre su problema específico
-Día 4: Urgencia suave con beneficio concreto
-Día 5: Seguimiento final, cierre simple
+Día 1: Introducción personalizada — menciona el servicio principal y por qué lo necesitan específicamente
+Día 2: Caso de éxito de negocio similar en Ecuador/LATAM usando uno de los servicios recomendados
+Día 3: Pregunta directa sobre su problema específico + menciona otro servicio complementario
+Día 4: Urgencia suave — lista rápida de 2-3 servicios con beneficio concreto para ellos
+Día 5: Seguimiento final, cierre simple con enlace a noboweb.com
 """
 
     try:

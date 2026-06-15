@@ -137,13 +137,17 @@ async def process_lote(lote_id: str) -> dict:
                 lead_score = kp.get("lead_score") or 0
                 problema   = kp.get("problema_principal", "")
                 oportunidad = kp.get("oportunidad", "")
+                servicios  = kp.get("servicios_recomendados", []) or []
+                servicio_principal = kp.get("servicio_principal", "")
+                servicios_str = ", ".join(servicios) if servicios else ""
                 temp = (
                     "🔥 Caliente" if lead_score >= 70
                     else "🟡 Tibio" if lead_score >= 40
                     else "❄️ Frío"
                 )
                 result["steps"]["p4"] = {
-                    "status": "ok", "score": lead_score, "temp": temp
+                    "status": "ok", "score": lead_score, "temp": temp,
+                    "servicios": servicios,
                 }
                 # Contadores para resumen
                 if lead_score >= 70:
@@ -153,14 +157,16 @@ async def process_lote(lote_id: str) -> dict:
 
                 if _SHEETS_AVAILABLE:
                     await update_lead_in_sheet(lote_id, place_id, {
-                        "Lead Score":       str(lead_score),
-                        "Temperatura":      temp,
-                        "Problema Principal": problema,
-                        "Oportunidad":      oportunidad,
-                        "Estado":           "⏳ P4 listo",
+                        "Lead Score":            str(lead_score),
+                        "Temperatura":           temp,
+                        "Problema Principal":    problema,
+                        "Oportunidad":           oportunidad,
+                        "Servicio Principal":    servicio_principal,
+                        "Servicios Recomendados": servicios_str,
+                        "Estado":                "⏳ P4 listo",
                     })
                     # ← Color de la fila se aplica automáticamente en update_lead_in_sheet
-                print(f"  P4 ok — Score: {lead_score} {temp}")
+                print(f"  P4 ok — Score: {lead_score} {temp} | Servicios: {servicios_str}")
         except Exception as e:
             print(f"  P4 error: {e}")
             result["steps"]["p4"] = {"status": "error", "error": str(e)}

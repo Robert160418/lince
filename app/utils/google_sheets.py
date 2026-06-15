@@ -14,26 +14,28 @@ _client = None
 
 # ── Columnas del sheet de lotes ──────────────────────────────────────────────
 LOTE_HEADERS = [
-    "place_id",            # A — ID interno
-    "Negocio",             # B
-    "Rating ⭐",           # C
-    "Teléfono",            # D
-    "Website",             # E
-    "Dirección",           # F
-    "P2 Reviews",          # G — cantidad / ✅ / ❌
-    "P3 Web",              # H — ✅ / ❌ / — sin web
-    "Lead Score",          # I — 0-100
-    "Temperatura",         # J — 🔥 Caliente / 🟡 Tibio / ❄️ Frío
-    "Problema Principal",  # K — texto IA
-    "Oportunidad",         # L — texto IA
-    "Email Destino",       # M — email del contacto
-    "P5 Emails",           # N — ✅ 5 / ❌
-    "Email 1 — Asunto",    # O
-    "Email 2 — Asunto",    # P
-    "Email 3 — Asunto",    # Q
-    "P6 Estado",           # R — ✅ Enviado / ❌ / — sin email
-    "Fecha Envío",         # S — timestamp
-    "Estado",              # T — resumen global: ✅ Completo / ⚠️ Parcial / ❌ Error / ⏳ En proceso
+    "place_id",              # A — ID interno
+    "Negocio",               # B
+    "Rating ⭐",             # C
+    "Teléfono",              # D
+    "Website",               # E
+    "Dirección",             # F
+    "P2 Reviews",            # G — cantidad / ✅ / ❌
+    "P3 Web",                # H — ✅ / ❌ / — sin web
+    "Lead Score",            # I — 0-100
+    "Temperatura",           # J — 🔥 Caliente / 🟡 Tibio / ❄️ Frío
+    "Problema Principal",    # K — texto IA
+    "Oportunidad",           # L — texto IA
+    "Servicio Principal",    # M — servicio más urgente para este lead
+    "Servicios Recomendados",# N — lista de servicios separados por coma
+    "Email Destino",         # O — email del contacto
+    "P5 Emails",             # P — ✅ 5 / ❌
+    "Email 1 — Asunto",      # Q
+    "Email 2 — Asunto",      # R
+    "Email 3 — Asunto",      # S
+    "P6 Estado",             # T — ✅ Enviado / ❌ / — sin email
+    "Fecha Envío",           # U — timestamp
+    "Estado",                # V — resumen global: ✅ Completo / ⚠️ Parcial / ❌ Error / ⏳ En proceso
 ]
 COL = {h: i + 1 for i, h in enumerate(LOTE_HEADERS)}   # nombre → índice 1-based
 
@@ -174,6 +176,8 @@ def _add_lead_to_sheet_sync(lote_id: str, lead: dict):
         "",     # Temperatura
         "",     # Problema Principal
         "",     # Oportunidad
+        "",     # Servicio Principal
+        "",     # Servicios Recomendados
         "",     # Email Destino
         "⏳",   # P5 Emails
         "",     # Email 1 — Asunto
