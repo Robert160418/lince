@@ -1,260 +1,636 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Lince — Pipeline de Leads</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#06090f;--s1:rgba(12,18,35,0.95);--s2:rgba(18,27,50,0.8);
-  --border:rgba(255,255,255,0.07);--bh:rgba(96,165,250,0.3);
-  --txt:#e2e8f0;--muted:#64748b;
-  --blue:#3b82f6;--cyan:#06b6d4;--purple:#8b5cf6;
-  --green:#10b981;--yellow:#f59e0b;--red:#ef4444;
+  --bg:#060810;
+  --s1:rgba(10,15,30,0.97);--s2:rgba(15,22,45,0.85);--s3:rgba(20,30,60,0.6);
+  --border:rgba(255,255,255,0.06);--bh:rgba(96,165,250,0.25);--bh2:rgba(96,165,250,0.5);
+  --txt:#e2e8f0;--muted:#4a5568;--muted2:#64748b;
+  --blue:#3b82f6;--cyan:#06b6d4;--purple:#8b5cf6;--pink:#ec4899;
+  --green:#10b981;--yellow:#f59e0b;--red:#ef4444;--orange:#f97316;
   --grad:linear-gradient(135deg,#3b82f6,#06b6d4);
+  --grad2:linear-gradient(135deg,#7c3aed,#3b82f6);
+  --grad3:linear-gradient(135deg,#10b981,#06b6d4);
+  --glow-blue:0 0 20px rgba(59,130,246,0.15);
+  --glow-green:0 0 20px rgba(16,185,129,0.15);
+  --r:16px;
 }
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;
-  background-image:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(59,130,246,.1),transparent),
-  radial-gradient(ellipse 40% 30% at 85% 70%,rgba(139,92,246,.05),transparent);}
-.wrap{max-width:1200px;margin:0 auto;padding:24px 20px 60px}
-.hdr{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 26px;background:var(--s1);border:1px solid var(--border);border-radius:18px;margin-bottom:22px;backdrop-filter:blur(10px)}
-.hdr-brand{display:flex;align-items:center;gap:12px}
-.logo{width:40px;height:40px;background:var(--grad);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
-.hdr h1{font-size:1.35rem;font-weight:800;letter-spacing:-.03em}
-.hdr p{font-size:.82rem;color:var(--muted);margin-top:2px}
-.badge{display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;font-size:.8rem;font-weight:600;white-space:nowrap;transition:all .3s}
-.badge.ok{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green)}
-.badge.loading{background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);color:var(--cyan)}
-.badge.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--red)}
-.dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.qbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
-.qbtn{padding:8px 16px;border-radius:9px;border:1px solid var(--border);background:var(--s1);color:var(--muted);font-size:.83rem;font-weight:500;cursor:pointer;transition:all .18s;font-family:inherit}
-.qbtn:hover{border-color:var(--bh);color:var(--txt);background:var(--s2)}
-.qbtn.active{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.08)}
-.mgrid{display:grid;grid-template-columns:1fr 355px;gap:18px;align-items:start}
-@media(max-width:860px){.mgrid{grid-template-columns:1fr}}
-.section-lbl{font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-.card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;transition:border-color .2s,transform .2s}
-.card:hover{border-color:var(--bh);transform:translateY(-1px)}
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%,rgba(59,130,246,0.08),transparent),
+    radial-gradient(ellipse 50% 40% at 90% 80%,rgba(139,92,246,0.05),transparent),
+    radial-gradient(ellipse 40% 30% at 10% 60%,rgba(6,182,212,0.04),transparent);}
+
+/* ── Layout ── */
+.wrap{max-width:1280px;margin:0 auto;padding:20px 18px 80px}
+
+/* ── Header ── */
+.hdr{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:16px 24px;background:var(--s1);border:1px solid var(--border);
+  border-radius:20px;margin-bottom:18px;backdrop-filter:blur(20px);
+  box-shadow:var(--glow-blue);position:relative;overflow:hidden;
+}
+.hdr::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(59,130,246,0.03),transparent 40%,rgba(6,182,212,0.03));
+  pointer-events:none;
+}
+.hdr-left{display:flex;align-items:center;gap:14px}
+.logo{
+  width:44px;height:44px;background:var(--grad);border-radius:13px;
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+  box-shadow:0 4px 12px rgba(59,130,246,0.35);flex-shrink:0;
+}
+.hdr h1{font-size:1.3rem;font-weight:900;letter-spacing:-.04em;
+  background:linear-gradient(135deg,#fff 40%,rgba(255,255,255,0.6));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hdr-sub{font-size:.75rem;color:var(--muted2);margin-top:2px;font-weight:500}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.status-badge{
+  display:flex;align-items:center;gap:6px;padding:7px 14px;
+  border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap;
+  transition:all .3s;border:1px solid transparent;
+}
+.status-badge.ok{background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);color:var(--green)}
+.status-badge.loading{background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.2);color:var(--cyan)}
+.status-badge.err{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--red)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Stats bar ── */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+  margin-bottom:18px;
+}
+.stat-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:14px 18px;display:flex;align-items:center;gap:12px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.stat-card:hover{border-color:var(--bh);box-shadow:var(--glow-blue)}
+.stat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.stat-icon.blue{background:rgba(59,130,246,0.12)}
+.stat-icon.red{background:rgba(239,68,68,0.12)}
+.stat-icon.yellow{background:rgba(245,158,11,0.12)}
+.stat-icon.green{background:rgba(16,185,129,0.12)}
+.stat-val{font-size:1.5rem;font-weight:800;letter-spacing:-.03em;line-height:1}
+.stat-lbl{font-size:.72rem;color:var(--muted2);margin-top:3px;font-weight:500}
+
+/* ── Pipeline stepper ── */
+.pipeline-stepper{
+  background:var(--s1);border:1px solid var(--border);border-radius:18px;
+  padding:20px 28px;margin-bottom:18px;overflow-x:auto;scrollbar-width:none;
+}
+.pipeline-stepper::-webkit-scrollbar{display:none}
+.ps-inner{display:flex;align-items:flex-start;min-width:640px}
+.ps-step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;cursor:pointer}
+.ps-step:hover .ps-circle{box-shadow:0 0 0 4px rgba(59,130,246,0.2)}
+/* connecting line */
+.ps-step:not(:last-child)::after{
+  content:'';position:absolute;top:19px;left:calc(50% + 20px);
+  right:calc(-50% + 20px);height:2px;
+  background:var(--border);z-index:0;transition:background .4s;
+}
+.ps-step.done:not(:last-child)::after{background:linear-gradient(90deg,var(--green),rgba(16,185,129,0.3))}
+.ps-step.active:not(:last-child)::after{background:linear-gradient(90deg,var(--blue),var(--border))}
+.ps-circle{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,0.04);border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;font-weight:800;color:var(--muted2);
+  transition:all .3s cubic-bezier(.34,1.4,.64,1);position:relative;z-index:1;
+  flex-shrink:0;
+}
+.ps-step.active .ps-circle{
+  background:var(--grad);border-color:transparent;color:#fff;
+  box-shadow:0 0 0 4px rgba(59,130,246,0.15),0 4px 14px rgba(59,130,246,0.4);
+  animation:stepPulse 2s ease-in-out infinite;
+}
+.ps-step.done .ps-circle{
+  background:rgba(16,185,129,0.12);border-color:var(--green);color:var(--green);
+}
+.ps-step.err .ps-circle{
+  background:rgba(239,68,68,0.1);border-color:var(--red);color:var(--red);
+}
+@keyframes stepPulse{
+  0%,100%{box-shadow:0 0 0 4px rgba(59,130,246,0.15),0 4px 14px rgba(59,130,246,0.4)}
+  50%{box-shadow:0 0 0 8px rgba(59,130,246,0.08),0 4px 20px rgba(59,130,246,0.5)}
+}
+.ps-emoji{font-size:1.05rem;line-height:1}
+.ps-label{font-size:.72rem;font-weight:700;color:var(--muted2);margin-top:8px;text-align:center;transition:color .3s;white-space:nowrap}
+.ps-sublabel{font-size:.65rem;color:var(--muted);margin-top:2px;text-align:center;white-space:nowrap}
+.ps-step.active .ps-label{color:var(--blue)}
+.ps-step.done .ps-label{color:var(--green)}
+.ps-step.err .ps-label{color:var(--red)}
+.ps-actions{display:flex;align-items:center;gap:8px;padding-top:4px;flex-shrink:0;margin-left:16px;border-left:1px solid var(--border);padding-left:16px}
+.ps-btn{
+  padding:6px 14px;border-radius:8px;font-size:.76rem;font-weight:700;
+  border:1px solid var(--border);background:transparent;color:var(--muted2);
+  cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap;
+}
+.ps-btn:hover{border-color:var(--bh);color:var(--txt)}
+.ps-btn.primary{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 2px 8px rgba(59,130,246,0.3)}
+.ps-btn.primary:hover{opacity:.88}
+
+/* ── Main hero: P1 ── */
+.hero-p1{
+  background:var(--s1);border:1px solid rgba(59,130,246,0.2);
+  border-radius:20px;padding:28px 28px 24px;margin-bottom:18px;
+  position:relative;overflow:hidden;box-shadow:var(--glow-blue);
+}
+.hero-p1::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--grad);border-radius:20px 20px 0 0;
+}
+.hero-p1-hd{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.hero-badge{
+  padding:5px 12px;border-radius:8px;font-size:.78rem;font-weight:800;
+  letter-spacing:.04em;background:var(--grad);color:#fff;
+  box-shadow:0 2px 8px rgba(59,130,246,0.3);
+}
+.hero-p1-hd h2{font-size:1.05rem;font-weight:700}
+.hero-p1-hd p{font-size:.8rem;color:var(--muted2);margin-top:1px}
+.hero-input-row{display:flex;gap:10px}
+.hero-input-wrap{flex:1;position:relative}
+.hero-input-wrap input{
+  width:100%;padding:13px 16px 13px 42px;border-radius:12px;
+  border:1px solid var(--border);background:rgba(6,9,15,0.7);
+  color:var(--txt);font-size:.95rem;font-family:inherit;outline:none;
+  transition:border-color .18s,box-shadow .18s;
+}
+.hero-input-wrap input:focus{border-color:rgba(59,130,246,0.5);box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+.hero-input-wrap input::placeholder{color:var(--muted);opacity:.6}
+.hero-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:1rem;pointer-events:none}
+.hero-limit{width:90px}
+.hero-limit input{padding:13px 12px;border-radius:12px;border:1px solid var(--border);
+  background:rgba(6,9,15,0.7);color:var(--txt);font-size:.95rem;font-family:inherit;
+  outline:none;width:100%;text-align:center;transition:border-color .18s;}
+.hero-limit input:focus{border-color:rgba(59,130,246,0.5)}
+.btn-launch{
+  padding:13px 24px;border:none;border-radius:12px;
+  background:var(--grad);color:#fff;font-size:.9rem;font-weight:700;
+  cursor:pointer;transition:all .18s;font-family:inherit;
+  display:flex;align-items:center;gap:8px;white-space:nowrap;
+  box-shadow:0 4px 14px rgba(59,130,246,0.3);
+}
+.btn-launch:hover:not(:disabled){opacity:.88;transform:translateY(-1px);box-shadow:0 6px 20px rgba(59,130,246,0.4)}
+.btn-launch:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.hero-hint{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.hint-chip{
+  padding:5px 12px;border-radius:999px;font-size:.75rem;font-weight:500;
+  border:1px solid var(--border);background:var(--s2);color:var(--muted2);
+  cursor:pointer;transition:all .15s;
+}
+.hint-chip:hover{border-color:var(--bh);color:var(--txt)}
+
+/* ── Main grid ── */
+.mgrid{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+@media(max-width:900px){.mgrid{grid-template-columns:1fr}}
+@media(max-width:560px){.stats-bar{grid-template-columns:repeat(2,1fr)}}
+
+/* ── Section label ── */
+.section-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+/* ── Pipeline cards ── */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;
+  padding:18px;transition:border-color .2s,transform .2s,box-shadow .2s;
+}
+.card:hover{border-color:var(--bh);transform:translateY(-2px);box-shadow:var(--glow-blue)}
 .card-hd{display:flex;align-items:center;gap:9px;margin-bottom:14px}
-.pbadge{padding:3px 8px;border-radius:5px;font-size:.7rem;font-weight:800;letter-spacing:.05em;background:var(--grad);color:#fff}
-.card h3{font-size:.92rem;font-weight:600}
-.field{margin-bottom:10px}
-.field label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.07em}
-.field input,.field select{width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:rgba(6,9,15,.6);color:var(--txt);font-size:.86rem;font-family:inherit;outline:none;transition:border-color .18s}
-.field input:focus,.field select:focus{border-color:var(--blue)}
+.pbadge{
+  padding:3px 9px;border-radius:6px;font-size:.68rem;font-weight:800;
+  letter-spacing:.06em;background:var(--grad);color:#fff;
+}
+.card h3{font-size:.88rem;font-weight:700}
+.card-desc{font-size:.75rem;color:var(--muted2);margin-bottom:12px;line-height:1.5}
+.field{margin-bottom:9px}
+.field label{display:block;font-size:.68rem;font-weight:700;color:var(--muted2);
+  margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em}
+.field input,.field select{
+  width:100%;padding:8px 11px;border-radius:9px;
+  border:1px solid var(--border);background:rgba(6,9,15,0.6);
+  color:var(--txt);font-size:.84rem;font-family:inherit;outline:none;
+  transition:border-color .18s;
+}
+.field input:focus,.field select:focus{border-color:rgba(59,130,246,0.4)}
 .field input::placeholder{color:var(--muted);opacity:.5}
-.btn-run{width:100%;margin-top:12px;padding:11px;border:none;border-radius:11px;background:var(--grad);color:#fff;font-size:.86rem;font-weight:700;cursor:pointer;transition:opacity .18s,transform .15s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-run{
+  width:100%;margin-top:10px;padding:10px;border:none;border-radius:10px;
+  background:var(--grad);color:#fff;font-size:.84rem;font-weight:700;
+  cursor:pointer;transition:all .18s;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
 .btn-run:hover:not(:disabled){opacity:.83;transform:translateY(-1px)}
-.btn-run:disabled{opacity:.35;cursor:not-allowed;transform:none}
-.rpanel{display:flex;flex-direction:column;gap:14px}
-.pcrd{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px}
-.pcrd h3{font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
-.lead-info{font-size:.84rem;line-height:1.7;color:var(--muted)}
-.lead-info strong{color:var(--txt);display:block;font-size:.93rem;margin-bottom:3px}
-.tag{display:inline-block;padding:2px 7px;border-radius:4px;background:rgba(59,130,246,.12);color:var(--blue);font-size:.72rem;margin:2px 2px 0 0}
-.btn-seq{width:100%;margin-top:12px;padding:12px;border:none;border-radius:11px;background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;font-size:.88rem;font-weight:700;cursor:pointer;transition:opacity .18s,transform .15s;font-family:inherit}
-.btn-seq:hover{opacity:.83;transform:translateY(-1px)}
-.lotes-panel{display:none;background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:22px}
+.btn-run:disabled{opacity:.3;cursor:not-allowed;transform:none}
+
+/* ── Right panel ── */
+.rpanel{display:flex;flex-direction:column;gap:12px}
+.pcrd{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:18px}
+.pcrd h3{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.lead-info{font-size:.83rem;line-height:1.75;color:var(--muted2)}
+.lead-info strong{color:var(--txt);display:block;font-size:.9rem;margin-bottom:4px;font-weight:700}
+.tag{display:inline-block;padding:2px 8px;border-radius:5px;
+  background:rgba(59,130,246,0.1);color:var(--blue);font-size:.71rem;
+  margin:2px 2px 0 0;font-weight:500;border:1px solid rgba(59,130,246,0.15)}
+.tag.green{background:rgba(16,185,129,0.1);color:var(--green);border-color:rgba(16,185,129,0.15)}
+.tag.yellow{background:rgba(245,158,11,0.1);color:var(--yellow);border-color:rgba(245,158,11,0.15)}
+.tag.purple{background:rgba(139,92,246,0.1);color:var(--purple);border-color:rgba(139,92,246,0.15)}
+.btn-seq{
+  width:100%;margin-top:12px;padding:11px;border:none;border-radius:11px;
+  background:var(--grad2);color:#fff;font-size:.86rem;font-weight:700;
+  cursor:pointer;transition:all .18s;font-family:inherit;
+  box-shadow:0 4px 12px rgba(124,58,237,0.25);
+}
+.btn-seq:hover{opacity:.85;transform:translateY(-1px)}
+
+/* ── Lotes panel ── */
+.lotes-panel{
+  display:none;background:var(--s1);border:1px solid var(--border);
+  border-radius:18px;padding:20px;margin-bottom:18px;
+}
 .lotes-panel.show{display:block}
-.lotes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:14px}
-.lote-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .18s,background .18s}
-.lote-card:hover{border-color:var(--bh);background:rgba(59,130,246,.05)}
-.lote-id{font-size:.78rem;color:var(--muted);font-family:monospace;margin-bottom:4px}
-.lote-query{font-weight:600;font-size:.9rem;margin-bottom:6px}
-.lote-meta{display:flex;align-items:center;justify-content:space-between}
-.lote-count{font-size:.78rem;color:var(--muted)}
-.btn-batch{padding:6px 14px;border:none;border-radius:8px;background:var(--grad);color:#fff;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .18s}
-.btn-batch:hover{opacity:.82}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.lotes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;margin-top:14px}
+.lote-card{
+  background:var(--s2);border:1px solid var(--border);border-radius:13px;
+  padding:14px 16px;cursor:default;transition:border-color .18s;
+}
+.lote-card:hover{border-color:var(--bh)}
+.lote-id{font-size:.72rem;color:var(--muted);font-family:monospace;margin-bottom:4px}
+.lote-query{font-weight:700;font-size:.88rem;margin-bottom:10px}
+.lote-meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lote-count{font-size:.77rem;color:var(--muted2)}
+.btn-batch{
+  padding:7px 14px;border:none;border-radius:8px;background:var(--grad);
+  color:#fff;font-size:.77rem;font-weight:700;cursor:pointer;
+  font-family:inherit;transition:all .18s;box-shadow:0 2px 8px rgba(59,130,246,0.25);
+}
+.btn-batch:hover{opacity:.85;transform:translateY(-1px)}
+
+/* ── Overlay & modals ── */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);
+  z-index:100;display:flex;align-items:center;justify-content:center;
+  padding:20px;opacity:0;pointer-events:none;transition:opacity .25s;
+}
 .overlay.show{opacity:1;pointer-events:all}
-.modal{background:var(--s1);border:1px solid rgba(255,255,255,.1);border-radius:24px;width:100%;max-width:580px;max-height:85vh;overflow-y:auto;transform:translateY(16px) scale(.97);transition:transform .28s cubic-bezier(.34,1.4,.64,1);box-shadow:0 40px 80px rgba(0,0,0,.5)}
+.modal{
+  background:var(--s1);border:1px solid rgba(255,255,255,0.08);
+  border-radius:22px;width:100%;max-width:600px;max-height:88vh;
+  overflow-y:auto;transform:translateY(20px) scale(.97);
+  transition:transform .3s cubic-bezier(.34,1.4,.64,1);
+  box-shadow:0 40px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04);
+}
 .overlay.show .modal{transform:translateY(0) scale(1)}
-.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--s1);z-index:1;border-radius:24px 24px 0 0}
+.modal-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 22px 16px;border-bottom:1px solid var(--border);
+  position:sticky;top:0;background:var(--s1);z-index:1;border-radius:22px 22px 0 0;
+}
 .modal-title{display:flex;align-items:center;gap:10px}
-.modal-title .pbadge{font-size:.8rem;padding:5px 11px}
-.modal-title h2{font-size:1.05rem;font-weight:700}
-.close-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s}
+.modal-title .pbadge{font-size:.78rem;padding:5px 12px}
+.modal-title h2{font-size:1rem;font-weight:700}
+.close-btn{
+  width:30px;height:30px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--muted2);font-size:1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .18s;
+}
 .close-btn:hover{background:var(--s2);color:var(--txt)}
-.modal-body{padding:24px}
-.stage{display:none}.stage.active{display:block}
-.anim-radar{display:flex;flex-direction:column;align-items:center;padding:32px 0}
-.radar-ring{width:140px;height:140px;border-radius:50%;border:2px solid rgba(59,130,246,.2);display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px}
-.radar-ring::before,.radar-ring::after{content:'';position:absolute;border-radius:50%;border:1.5px solid rgba(59,130,246,.15)}
-.radar-ring::before{width:100px;height:100px}.radar-ring::after{width:60px;height:60px}
-.radar-sweep{position:absolute;width:50%;height:2px;background:linear-gradient(90deg,transparent,var(--blue));transform-origin:left center;animation:sweep 1.8s linear infinite;top:50%;left:50%}
-@keyframes sweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.radar-dot{font-size:1.8rem}
-.anim-label{font-size:.9rem;color:var(--muted);text-align:center}
-.anim-sub{font-size:.78rem;color:var(--muted);opacity:.6;margin-top:4px;text-align:center}
-.anim-stars{display:flex;flex-direction:column;align-items:center;padding:32px 0}
-.star-row{display:flex;gap:8px;margin-bottom:20px;font-size:2rem}
-.anim-scan{display:flex;flex-direction:column;align-items:center;padding:32px 0}
-.browser-box{width:200px;border:1.5px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;margin-bottom:20px}
-.browser-bar{background:rgba(255,255,255,.05);padding:7px 10px;display:flex;gap:5px}
-.brdot{width:7px;height:7px;border-radius:50%}
-.browser-content{padding:12px;display:flex;flex-direction:column;gap:6px}
-.scan-line{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--cyan));animation:scanGrow 1s ease-in-out infinite alternate}
-.scan-line:nth-child(1){width:80%}.scan-line:nth-child(2){width:60%;animation-delay:.2s}.scan-line:nth-child(3){width:90%;animation-delay:.4s}.scan-line:nth-child(4){width:50%;animation-delay:.6s}
-@keyframes scanGrow{from{opacity:.3}to{opacity:1}}
-.anim-brain{display:flex;flex-direction:column;align-items:center;padding:32px 0}
-.brain-icon{font-size:3.5rem;margin-bottom:12px;animation:breathe 1.5s ease-in-out infinite}
-@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-.typing-dots{display:flex;gap:5px;margin-top:6px}
-.tdot{width:8px;height:8px;border-radius:50%;background:var(--purple);animation:tdot .8s ease-in-out infinite}
-.tdot:nth-child(2){animation-delay:.2s}.tdot:nth-child(3){animation-delay:.4s}
-@keyframes tdot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-6px);opacity:1}}
-.anim-type{display:flex;flex-direction:column;align-items:center;padding:32px 0}
-.email-icon{font-size:3rem;margin-bottom:12px;animation:float 2s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.type-bar{display:flex;gap:4px;margin-top:8px}
-.tbar{width:20px;height:4px;border-radius:2px;background:var(--grad);animation:tbar .6s ease-in-out infinite alternate}
-.tbar:nth-child(2){animation-delay:.1s}.tbar:nth-child(3){animation-delay:.2s}.tbar:nth-child(4){animation-delay:.3s}.tbar:nth-child(5){animation-delay:.4s}
-@keyframes tbar{from{opacity:.2}to{opacity:1}}
-.anim-send{display:flex;flex-direction:column;align-items:center;padding:32px 0}
-.plane-icon{font-size:3rem;margin-bottom:12px;animation:plane 1.5s ease-in-out infinite}
-@keyframes plane{0%{transform:translate(0,0) rotate(-15deg)}50%{transform:translate(10px,-8px) rotate(-15deg)}100%{transform:translate(0,0) rotate(-15deg)}}
-.result-ok,.result-err{padding:20px;border-radius:14px}
-.result-ok{background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2)}
-.result-err{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2)}
-.result-hd{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-weight:700}
-.result-hd .icon{font-size:1.2rem}
-.lead-cards{display:flex;flex-direction:column;gap:10px}
-.lcard{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:13px 15px;cursor:pointer;transition:border-color .18s}
-.lcard:hover{border-color:var(--bh)}
-.lcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-.lcard-name{font-weight:600;font-size:.9rem}
-.lcard-stars{color:var(--yellow);font-size:.82rem}
-.lcard-addr{font-size:.78rem;color:var(--muted)}
-.lcard-url{font-size:.76rem;color:var(--blue);margin-top:3px}
-.lcard.selected{border-color:var(--blue);background:rgba(59,130,246,.08)}
-.kp-list{list-style:none}
-.kp-list li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:.87rem;line-height:1.5}
-.kp-list li:last-child{border-bottom:none}
-.kp-bullet{color:var(--blue);font-size:1rem;flex-shrink:0;margin-top:1px}
-.email-prev{background:var(--s2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px}
-.email-prev-hdr{padding:14px 16px;border-bottom:1px solid var(--border);font-size:.82rem;color:var(--muted)}
-.email-prev-hdr strong{color:var(--txt);display:block;font-size:.9rem;margin-bottom:2px}
-.email-prev-body{padding:16px;font-size:.83rem;line-height:1.65;color:var(--txt);white-space:pre-wrap;max-height:280px;overflow-y:auto}
-.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.aitem{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px}
-.aitem-lbl{font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px}
-.aitem-val{font-size:.84rem;color:var(--txt);line-height:1.5}
-.send-success{text-align:center;padding:20px 0}
-.send-icon{font-size:3.5rem;margin-bottom:12px;animation:popIn .4s cubic-bezier(.34,1.6,.64,1)}
-@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
-.send-success h3{font-size:1.05rem;font-weight:700;margin-bottom:6px}
-.send-success p{color:var(--muted);font-size:.86rem}
-.modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
-.btn-secondary{padding:9px 18px;border:1px solid var(--border);border-radius:9px;background:transparent;color:var(--muted);font-size:.84rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.modal-body{padding:22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);
+  display:flex;gap:10px;justify-content:flex-end}
+.btn-secondary{
+  padding:8px 18px;border:1px solid var(--border);border-radius:9px;
+  background:transparent;color:var(--muted2);font-size:.83rem;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .18s;
+}
 .btn-secondary:hover{border-color:var(--bh);color:var(--txt)}
-.btn-primary{padding:9px 20px;border:none;border-radius:9px;background:var(--grad);color:#fff;font-size:.84rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .18s}
-.btn-primary:hover{opacity:.83}
-.batch-modal{max-width:700px}
-.batch-prog-bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.btn-primary{
+  padding:8px 20px;border:none;border-radius:9px;background:var(--grad);
+  color:#fff;font-size:.83rem;font-weight:700;cursor:pointer;font-family:inherit;
+  transition:opacity .18s;
+}
+.btn-primary:hover{opacity:.85}
+
+/* ── Stage animations ── */
+.stage{display:none}.stage.active{display:block}
+.anim-center{display:flex;flex-direction:column;align-items:center;padding:28px 0}
+.radar-ring{
+  width:130px;height:130px;border-radius:50%;border:1.5px solid rgba(59,130,246,0.2);
+  display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:18px;
+}
+.radar-ring::before,.radar-ring::after{content:'';position:absolute;border-radius:50%;border:1px solid rgba(59,130,246,0.12)}
+.radar-ring::before{width:95px;height:95px}.radar-ring::after{width:58px;height:58px}
+.radar-sweep{position:absolute;width:50%;height:2px;background:linear-gradient(90deg,transparent,var(--blue));
+  transform-origin:left center;animation:sweep 1.8s linear infinite;top:50%;left:50%}
+@keyframes sweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.anim-icon{font-size:2.8rem;margin-bottom:14px}
+.anim-bounce{animation:float 2s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.anim-pulse{animation:breathe 1.5s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.anim-label{font-size:.88rem;color:var(--muted2);text-align:center;line-height:1.5}
+.anim-sub{font-size:.76rem;color:var(--muted);margin-top:4px;text-align:center}
+.typing-dots{display:flex;gap:4px;margin-top:8px;justify-content:center}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--purple);animation:tdot .8s ease-in-out infinite}
+.tdot:nth-child(2){animation-delay:.2s}.tdot:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-5px);opacity:1}}
+
+/* ── Results ── */
+.result-ok,.result-err{padding:18px;border-radius:13px}
+.result-ok{background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.18)}
+.result-err{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.18)}
+.result-hd{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-weight:700}
+.lead-cards{display:flex;flex-direction:column;gap:9px}
+.lcard{
+  background:var(--s2);border:1px solid var(--border);border-radius:12px;
+  padding:12px 14px;cursor:pointer;transition:border-color .18s,background .18s;
+}
+.lcard:hover{border-color:var(--bh);background:rgba(59,130,246,0.04)}
+.lcard.selected{border-color:var(--blue);background:rgba(59,130,246,0.08)}
+.lcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.lcard-name{font-weight:700;font-size:.88rem}
+.lcard-stars{color:var(--yellow);font-size:.8rem}
+.lcard-addr{font-size:.76rem;color:var(--muted2)}
+.lcard-url{font-size:.74rem;color:var(--blue);margin-top:2px}
+.kp-list{list-style:none}
+.kp-list li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.85rem;line-height:1.5}
+.kp-list li:last-child{border-bottom:none}
+.kp-bullet{color:var(--blue);flex-shrink:0;margin-top:1px}
+.email-prev{background:var(--s2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}
+.email-prev-hdr{padding:12px 14px;border-bottom:1px solid var(--border);font-size:.8rem;color:var(--muted2)}
+.email-prev-hdr strong{color:var(--txt);display:block;font-size:.88rem;margin-bottom:2px}
+.email-prev-body{padding:14px;font-size:.82rem;line-height:1.65;color:var(--txt);white-space:pre-wrap;max-height:260px;overflow-y:auto}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.aitem{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:11px}
+.aitem-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+.aitem-val{font-size:.83rem;color:var(--txt);line-height:1.5}
+.send-success{text-align:center;padding:18px 0}
+.send-icon{font-size:3rem;margin-bottom:10px;animation:popIn .4s cubic-bezier(.34,1.6,.64,1)}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+.send-success h3{font-size:1rem;font-weight:700;margin-bottom:5px}
+.send-success p{color:var(--muted2);font-size:.84rem}
+
+/* ── Service chips ── */
+.svc-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.svc-chip{
+  padding:3px 9px;border-radius:5px;font-size:.7rem;font-weight:600;
+  background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.2);
+  color:var(--purple);
+}
+.svc-chip.main{background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.25);color:var(--blue)}
+
+/* ── Batch modal ── */
+.batch-modal{max-width:720px}
+.batch-prog-bar{height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;margin-bottom:8px}
 .batch-prog-fill{height:100%;background:var(--grad);border-radius:3px;transition:width .4s ease}
-.batch-prog-txt{font-size:.78rem;color:var(--muted);margin-bottom:16px}
+.batch-prog-txt{font-size:.77rem;color:var(--muted2);margin-bottom:16px}
 .batch-leads{display:flex;flex-direction:column;gap:8px}
-.batch-lead-row{background:var(--s2);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+.batch-lead-row{
+  background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;
+}
 .batch-lead-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.batch-lead-name{font-weight:600;font-size:.88rem}
-.batch-steps{display:flex;gap:6px;flex-wrap:wrap}
-.step-badge{padding:3px 9px;border-radius:5px;font-size:.72rem;font-weight:700;border:1px solid var(--border);color:var(--muted);background:transparent;transition:all .25s}
-.step-badge.running{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,.1);animation:pulse 1.2s infinite}
-.step-badge.ok{border-color:var(--green);color:var(--green);background:rgba(16,185,129,.1)}
-.step-badge.err{border-color:var(--red);color:var(--red);background:rgba(239,68,68,.1)}
-.step-badge.skip{border-color:var(--muted);color:var(--muted);opacity:.5}
-.batch-summary{background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:16px;margin-top:14px;display:none}
+.batch-lead-name{font-weight:700;font-size:.86rem}
+.batch-steps{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.step-badge{
+  padding:3px 9px;border-radius:5px;font-size:.7rem;font-weight:700;
+  border:1px solid var(--border);color:var(--muted2);background:transparent;
+  transition:all .25s;
+}
+.step-badge.running{border-color:var(--cyan);color:var(--cyan);background:rgba(6,182,212,0.1);animation:pulse 1.2s infinite}
+.step-badge.ok{border-color:var(--green);color:var(--green);background:rgba(16,185,129,0.1)}
+.step-badge.err{border-color:var(--red);color:var(--red);background:rgba(239,68,68,0.1)}
+.step-badge.skip{opacity:.4}
+.batch-lead-svc{font-size:.72rem;color:var(--purple);margin-top:6px;opacity:.85}
+.batch-summary{
+  background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.18);
+  border-radius:13px;padding:16px;margin-top:14px;display:none;
+}
 .batch-summary.show{display:block}
-.batch-sum-row{display:flex;justify-content:space-between;font-size:.85rem;padding:4px 0}
-.batch-sum-row strong{color:var(--txt)}
-.batch-sheet-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 14px;border-radius:8px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green);font-size:.82rem;font-weight:600;text-decoration:none;transition:opacity .18s}
-.batch-sheet-link:hover{opacity:.8}
+.batch-sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.batch-sum-item{background:var(--s2);border-radius:10px;padding:10px 14px;text-align:center}
+.batch-sum-val{font-size:1.4rem;font-weight:800;letter-spacing:-.03em}
+.batch-sum-lbl{font-size:.71rem;color:var(--muted2);margin-top:2px}
+.batch-sheet-link{
+  display:inline-flex;align-items:center;gap:7px;padding:9px 16px;
+  border-radius:9px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.22);
+  color:var(--green);font-size:.82rem;font-weight:700;text-decoration:none;
+  transition:all .18s;width:100%;justify-content:center;
+}
+.batch-sheet-link:hover{background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.4)}
+
+/* ── Pipeline info banner ── */
+.info-banner{
+  display:flex;align-items:flex-start;gap:10px;padding:12px 16px;
+  background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);
+  border-radius:11px;margin-bottom:16px;font-size:.8rem;line-height:1.5;color:var(--muted2);
+}
+.info-banner span{flex-shrink:0;margin-top:1px}
 </style>
 </head>
 <body>
 <div class="wrap">
+
+  <!-- Header -->
   <header class="hdr">
-    <div class="hdr-brand">
+    <div class="hdr-left">
       <div class="logo">🐆</div>
-      <div><h1>Lince Pipeline</h1><p>Prospección automática de leads B2B</p></div>
+      <div>
+        <h1>Lince</h1>
+        <div class="hdr-sub">Pipeline de prospección B2B · NoBo Web</div>
+      </div>
     </div>
-    <div id="hdrBadge" class="badge loading"><div class="dot"></div>Conectando…</div>
+    <div class="hdr-right">
+      <div id="hdrBadge" class="status-badge loading"><div class="dot"></div>Conectando…</div>
+    </div>
   </header>
-  <div class="qbar">
-    <button class="qbtn" onclick="scrollTo2('#p1card')">🗺️ P1 Scrape</button>
-    <button class="qbtn" onclick="scrollTo2('#p2card')">⭐ P2 Reviews</button>
-    <button class="qbtn" onclick="scrollTo2('#p3card')">🌐 P3 Web</button>
-    <button class="qbtn" onclick="scrollTo2('#p4card')">🧠 P4 Análisis</button>
-    <button class="qbtn" onclick="scrollTo2('#p5card')">✉️ P5 Emails</button>
-    <button class="qbtn" onclick="scrollTo2('#p6card')">🚀 P6 Envío</button>
-    <button class="qbtn" id="btnVerLotes" onclick="toggleLotes()">📊 Ver Lotes</button>
-  </div>
-  <div class="lotes-panel" id="lotesPanel">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div class="section-lbl" style="margin:0;border:none">Lotes disponibles</div>
-      <button class="btn-secondary" style="font-size:.75rem;padding:6px 12px" onclick="loadLotes()">↺ Recargar</button>
+
+  <!-- Stats bar -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <div class="stat-icon blue">📋</div>
+      <div><div class="stat-val" id="statLeads">—</div><div class="stat-lbl">Total leads</div></div>
     </div>
-    <div id="lotesGrid" class="lotes-grid"><div style="color:var(--muted);font-size:.85rem;padding:20px 0">Cargando…</div></div>
+    <div class="stat-card">
+      <div class="stat-icon red">🔥</div>
+      <div><div class="stat-val" id="statCalientes" style="color:var(--red)">—</div><div class="stat-lbl">Calientes</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon yellow">🟡</div>
+      <div><div class="stat-val" id="statTibios" style="color:var(--yellow)">—</div><div class="stat-lbl">Tibios</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">✉️</div>
+      <div><div class="stat-val" id="statEnviados" style="color:var(--green)">—</div><div class="stat-lbl">Enviados</div></div>
+    </div>
   </div>
+
+  <!-- Pipeline stepper -->
+  <div class="pipeline-stepper">
+    <div class="ps-inner">
+      <div class="ps-step active" id="ps1" onclick="scrollTo2('#p1card')">
+        <div class="ps-circle"><span class="ps-emoji">🗺️</span></div>
+        <div class="ps-label">P1 · Scrape</div>
+        <div class="ps-sublabel">Google Maps</div>
+      </div>
+      <div class="ps-step" id="ps2" onclick="scrollTo2('#p2card')">
+        <div class="ps-circle"><span class="ps-emoji">⭐</span></div>
+        <div class="ps-label">P2 · Reviews</div>
+        <div class="ps-sublabel">Reseñas</div>
+      </div>
+      <div class="ps-step" id="ps3" onclick="scrollTo2('#p3card')">
+        <div class="ps-circle"><span class="ps-emoji">🌐</span></div>
+        <div class="ps-label">P3 · Web</div>
+        <div class="ps-sublabel">Análisis sitio</div>
+      </div>
+      <div class="ps-step" id="ps4" onclick="scrollTo2('#p4card')">
+        <div class="ps-circle"><span class="ps-emoji">🧠</span></div>
+        <div class="ps-label">P4 · IA</div>
+        <div class="ps-sublabel">Score & Servicios</div>
+      </div>
+      <div class="ps-step" id="ps5" onclick="scrollTo2('#p5card')">
+        <div class="ps-circle"><span class="ps-emoji">✉️</span></div>
+        <div class="ps-label">P5 · Emails</div>
+        <div class="ps-sublabel">Secuencia 5 días</div>
+      </div>
+      <div class="ps-step" id="ps6" onclick="scrollTo2('#p6card')">
+        <div class="ps-circle"><span class="ps-emoji">🚀</span></div>
+        <div class="ps-label">P6 · Envío</div>
+        <div class="ps-sublabel">Brevo</div>
+      </div>
+      <div class="ps-actions">
+        <button class="ps-btn" onclick="toggleLotes()">📊 Lotes</button>
+        <button class="ps-btn primary" onclick="document.getElementById('p1Query').focus();scrollTo2('#p1card')">+ Nuevo lote</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lotes panel -->
+  <div class="lotes-panel" id="lotesPanel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="section-lbl" style="margin:0;border:none;padding:0">Lotes disponibles</div>
+      <button class="btn-secondary" style="font-size:.73rem;padding:5px 11px" onclick="loadLotes()">↺ Recargar</button>
+    </div>
+    <div id="lotesGrid" class="lotes-grid">
+      <div style="color:var(--muted2);font-size:.84rem;padding:16px 0">Cargando lotes…</div>
+    </div>
+  </div>
+
+  <!-- Hero P1 -->
+  <div class="hero-p1" id="p1card">
+    <div class="hero-p1-hd">
+      <span class="hero-badge">P1</span>
+      <div>
+        <h2>Scrape Google Maps</h2>
+        <p>Busca negocios y lanza el pipeline completo P2→P6 automáticamente</p>
+      </div>
+    </div>
+    <div class="hero-input-row">
+      <div class="hero-input-wrap">
+        <span class="hero-icon">🔍</span>
+        <input id="p1Query" type="text" placeholder="ej: restaurantes en Bogotá, clínicas dentales Madrid…" onkeydown="if(event.key==='Enter')runP1()"/>
+      </div>
+      <div class="hero-limit">
+        <input id="p1Limit" type="number" value="10" min="1" max="50" title="Límite de leads"/>
+      </div>
+      <button class="btn-launch" id="btnLaunch" onclick="runP1()">
+        <span>🚀</span> Lanzar
+      </button>
+    </div>
+    <div class="hero-hint">
+      <span style="font-size:.73rem;color:var(--muted);align-self:center">Sugerencias:</span>
+      <span class="hint-chip" onclick="setQuery('restaurantes en Quito')">restaurantes Quito</span>
+      <span class="hint-chip" onclick="setQuery('clínicas dentales Lima')">clínicas dentales Lima</span>
+      <span class="hint-chip" onclick="setQuery('hoteles en Medellín')">hoteles Medellín</span>
+      <span class="hint-chip" onclick="setQuery('gimnasios en Ciudad de México')">gimnasios CDMX</span>
+      <span class="hint-chip" onclick="setQuery('peluquerías en Guayaquil')">peluquerías Guayaquil</span>
+    </div>
+  </div>
+
+  <!-- Main grid -->
   <div class="mgrid">
     <div>
-      <div class="section-lbl">Pipeline de procesamiento</div>
+      <div class="section-lbl">Módulos individuales</div>
+      <div class="info-banner">
+        <span>💡</span>
+        <div>Usa P1 para procesar un <strong style="color:var(--txt)">lote completo automáticamente</strong>. Los módulos de abajo son para ejecutar pasos individuales sobre un lead específico usando su Place ID.</div>
+      </div>
       <div class="pgrid">
-        <div class="card" id="p1card">
-          <div class="card-hd"><span class="pbadge">P1</span><h3>Scrape Google Maps</h3></div>
-          <div class="field"><label>Búsqueda</label><input id="p1Query" type="text" placeholder="restaurantes Madrid" /></div>
-          <div class="field"><label>Límite</label><input id="p1Limit" type="number" value="10" min="1" max="50" /></div>
-          <button class="btn-run" onclick="runP1()"><span>🗺️</span> Ejecutar P1</button>
-        </div>
         <div class="card" id="p2card">
           <div class="card-hd"><span class="pbadge">P2</span><h3>Obtener Reviews</h3></div>
-          <div class="field"><label>Place ID</label><input id="p2PlaceId" type="text" placeholder="ChIJ..." /></div>
-          <div class="field"><label>Máx. Reviews</label><input id="p2Max" type="number" value="10" min="1" max="50" /></div>
-          <button class="btn-run" onclick="runP2()"><span>⭐</span> Ejecutar P2</button>
+          <div class="card-desc">Extrae reseñas de Google para analizar el problema del negocio.</div>
+          <div class="field"><label>Place ID</label><input id="p2PlaceId" type="text" placeholder="ChIJ…"/></div>
+          <div class="field"><label>Máx. Reviews</label><input id="p2Max" type="number" value="10" min="1" max="50"/></div>
+          <button class="btn-run" onclick="runP2()">⭐ Ejecutar P2</button>
         </div>
         <div class="card" id="p3card">
           <div class="card-hd"><span class="pbadge">P3</span><h3>Análisis de Web</h3></div>
-          <div class="field"><label>Place ID</label><input id="p3PlaceId" type="text" placeholder="ChIJ..." /></div>
-          <div class="field"><label>URL del sitio</label><input id="p3Url" type="text" placeholder="https://ejemplo.com" /></div>
-          <button class="btn-run" onclick="runP3()"><span>🌐</span> Ejecutar P3</button>
+          <div class="card-desc">Escanea el sitio web: tecnología, pixel, redes sociales.</div>
+          <div class="field"><label>Place ID</label><input id="p3PlaceId" type="text" placeholder="ChIJ…"/></div>
+          <div class="field"><label>URL del sitio</label><input id="p3Url" type="text" placeholder="https://ejemplo.com"/></div>
+          <button class="btn-run" onclick="runP3()">🌐 Ejecutar P3</button>
         </div>
         <div class="card" id="p4card">
           <div class="card-hd"><span class="pbadge">P4</span><h3>Keypoints IA</h3></div>
-          <div class="field"><label>Place ID</label><input id="p4PlaceId" type="text" placeholder="ChIJ..." /></div>
-          <button class="btn-run" onclick="runP4()"><span>🧠</span> Ejecutar P4</button>
+          <div class="card-desc">GPT analiza el lead y asigna score + servicios recomendados.</div>
+          <div class="field"><label>Place ID</label><input id="p4PlaceId" type="text" placeholder="ChIJ…"/></div>
+          <button class="btn-run" onclick="runP4()">🧠 Ejecutar P4</button>
         </div>
         <div class="card" id="p5card">
           <div class="card-hd"><span class="pbadge">P5</span><h3>Generar Emails</h3></div>
-          <div class="field"><label>Place ID</label><input id="p5PlaceId" type="text" placeholder="ChIJ..." /></div>
-          <button class="btn-run" onclick="runP5()"><span>✉️</span> Ejecutar P5</button>
+          <div class="card-desc">Crea secuencia de 5 emails personalizados con los servicios detectados.</div>
+          <div class="field"><label>Place ID</label><input id="p5PlaceId" type="text" placeholder="ChIJ…"/></div>
+          <button class="btn-run" onclick="runP5()">✉️ Ejecutar P5</button>
         </div>
         <div class="card" id="p6card">
-          <div class="card-hd"><span class="pbadge">P6</span><h3>Enviar Emails</h3></div>
-          <div class="field"><label>Place ID</label><input id="p6PlaceId" type="text" placeholder="ChIJ..." /></div>
-          <div class="field"><label>Email destino (opcional)</label><input id="p6Email" type="email" placeholder="cliente@empresa.com" /></div>
-          <button class="btn-run" onclick="runP6()"><span>🚀</span> Ejecutar P6</button>
+          <div class="card-hd"><span class="pbadge">P6</span><h3>Enviar Email</h3></div>
+          <div class="card-desc">Envía el email del día 1 de la secuencia vía Brevo.</div>
+          <div class="field"><label>Place ID</label><input id="p6PlaceId" type="text" placeholder="ChIJ…"/></div>
+          <div class="field"><label>Email destino (opcional)</label><input id="p6Email" type="email" placeholder="cliente@empresa.com"/></div>
+          <button class="btn-run" onclick="runP6()">🚀 Ejecutar P6</button>
         </div>
       </div>
     </div>
+
+    <!-- Right panel -->
     <div class="rpanel">
       <div class="pcrd">
         <h3>Lead seleccionado</h3>
-        <div class="lead-info" id="leadInfo"><span style="color:var(--muted);font-size:.83rem">Ejecuta P1 y selecciona un lead para ver su información aquí.</span></div>
+        <div class="lead-info" id="leadInfo">
+          <span style="color:var(--muted);font-size:.82rem">Ejecuta P1 y haz click en un lead para ver su información aquí.</span>
+        </div>
         <button class="btn-seq" id="btnSeq" style="display:none" onclick="runSequence()">⚡ Ejecutar P2→P5</button>
       </div>
       <div class="pcrd" id="statsCard" style="display:none">
-        <h3>Estadísticas del lote</h3>
+        <h3>Último lote</h3>
         <div id="statsBody" class="lead-info"></div>
+      </div>
+      <div class="pcrd">
+        <h3>Links rápidos</h3>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px">
+          <a href="https://docs.google.com/spreadsheets/d/1hgNERuux2eZ1MDv-tgCDp_qva-fqf1RHF9Qu4Qysjjg/edit" target="_blank" class="batch-sheet-link" style="width:auto;justify-content:flex-start">
+            📊 Ver Google Sheets
+          </a>
+          <a href="https://noboweb.com" target="_blank" class="batch-sheet-link" style="width:auto;justify-content:flex-start;background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.2);color:var(--purple)">
+            🌐 NoBo Web
+          </a>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- P1–P6 modal -->
 <div class="overlay" id="overlay" onclick="closeModal(event)">
   <div class="modal">
     <div class="modal-hdr">
@@ -268,10 +644,14 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   </div>
 </div>
 
+<!-- Batch modal -->
 <div class="overlay" id="batchOverlay" onclick="closeBatchModal(event)">
   <div class="modal batch-modal">
     <div class="modal-hdr">
-      <div class="modal-title"><span class="pbadge" style="background:linear-gradient(135deg,#7c3aed,#3b82f6)">BATCH</span><h2 id="batchTitle">Procesando lote…</h2></div>
+      <div class="modal-title">
+        <span class="pbadge" style="background:var(--grad2)">BATCH</span>
+        <h2 id="batchTitle">Procesando lote…</h2>
+      </div>
       <button class="close-btn" onclick="closeBatchOverlay()">✕</button>
     </div>
     <div class="modal-body">
@@ -279,202 +659,151 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
       <div class="batch-prog-txt" id="batchProgTxt">Iniciando…</div>
       <div class="batch-leads" id="batchLeadsList"></div>
       <div class="batch-summary" id="batchSummary">
-        <div class="batch-sum-row"><span>Total leads:</span><strong id="sumTotal">—</strong></div>
-        <div class="batch-sum-row"><span>✅ Completados:</span><strong id="sumOk">—</strong></div>
-        <div class="batch-sum-row"><span>🔥 Calientes:</span><strong id="sumCalientes" style="color:#ef4444">—</strong></div>
-        <div class="batch-sum-row"><span>🟡 Tibios:</span><strong id="sumTibios" style="color:#ca8a04">—</strong></div>
-        <div class="batch-sum-row"><span>✉️ Emails enviados:</span><strong id="sumEnviados" style="color:#10b981">—</strong></div>
-        <div class="batch-sum-row"><span>Lote:</span><strong id="sumLote" style="font-size:.78rem;font-family:monospace">—</strong></div>
-        <a href="#" id="sumSheetLink" class="batch-sheet-link" target="_blank" style="display:none">📊 Ver Google Sheet en tiempo real →</a>
+        <div class="batch-sum-grid">
+          <div class="batch-sum-item">
+            <div class="batch-sum-val" id="sumTotal">—</div>
+            <div class="batch-sum-lbl">Total leads</div>
+          </div>
+          <div class="batch-sum-item">
+            <div class="batch-sum-val" id="sumOk" style="color:var(--green)">—</div>
+            <div class="batch-sum-lbl">Completados</div>
+          </div>
+          <div class="batch-sum-item">
+            <div class="batch-sum-val" id="sumCalientes" style="color:var(--red)">—</div>
+            <div class="batch-sum-lbl">🔥 Calientes</div>
+          </div>
+          <div class="batch-sum-item">
+            <div class="batch-sum-val" id="sumTibios" style="color:var(--yellow)">—</div>
+            <div class="batch-sum-lbl">🟡 Tibios</div>
+          </div>
+          <div class="batch-sum-item">
+            <div class="batch-sum-val" id="sumEnviados" style="color:var(--green)">—</div>
+            <div class="batch-sum-lbl">✉️ Enviados</div>
+          </div>
+          <div class="batch-sum-item">
+            <div class="batch-sum-val" id="sumLote" style="font-size:.65rem;font-family:monospace;letter-spacing:0">—</div>
+            <div class="batch-sum-lbl">Lote ID</div>
+          </div>
+        </div>
+        <a href="#" id="sumSheetLink" class="batch-sheet-link" target="_blank" style="display:none">
+          📊 Ver Google Sheet en tiempo real →
+        </a>
       </div>
     </div>
-    <div class="modal-foot"><button class="btn-secondary" onclick="closeBatchOverlay()">Cerrar</button></div>
   </div>
 </div>
 
 <script>
-const API='';
-let selectedLead=null;
+const API = '';
 
+function scrollTo2(sel){
+  const el=document.querySelector(sel);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function setQuery(q){
+  document.getElementById('p1Query').value=q;
+  scrollTo2('#p1card');
+  document.getElementById('p1Query').focus();
+}
+
+// ── Pipeline stepper state ────────────────────────────────────────────────
+function setStep(num, state, sublabel){
+  const el=document.getElementById('ps'+num);
+  if(!el)return;
+  el.classList.remove('active','done','err');
+  if(state)el.classList.add(state);
+  if(sublabel!=null){
+    const sl=el.querySelector('.ps-sublabel');
+    if(sl)sl.textContent=sublabel;
+  }
+}
+function resetSteps(){
+  for(let i=1;i<=6;i++){
+    const el=document.getElementById('ps'+i);
+    if(!el)continue;
+    el.classList.remove('active','done','err');
+    const sl=el.querySelector('.ps-sublabel');
+    if(sl)sl.textContent=['Google Maps','Reseñas','Análisis sitio','Score & Servicios','Secuencia 5 días','Brevo'][i-1];
+  }
+  setStep(1,'active');
+}
+
+// ── Health check + stats ──────────────────────────────────────────────────
 async function checkHealth(){
-  const b=document.getElementById('hdrBadge');
-  try{const r=await fetch(API+'/health');if(r.ok){b.className='badge ok';b.innerHTML='<div class="dot"></div>API Online';}else throw 0;}
-  catch{b.className='badge err';b.innerHTML='<div class="dot"></div>API Offline';}
-}
-
-function openModal(badge,title){
-  document.getElementById('modalBadge').textContent=badge;
-  document.getElementById('modalTitle').textContent=title;
-  document.getElementById('modalBody').innerHTML='';
-  document.getElementById('modalFoot').style.display='none';
-  document.getElementById('overlay').classList.add('show');
-}
-function closeOverlay(){document.getElementById('overlay').classList.remove('show');}
-function closeModal(e){if(e.target===document.getElementById('overlay'))closeOverlay();}
-function showModalResult(html){document.getElementById('modalBody').innerHTML=html;document.getElementById('modalFoot').style.display='flex';}
-function showModalLoading(html){document.getElementById('modalBody').innerHTML=html;}
-function scrollTo2(sel){const el=document.querySelector(sel);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
-
-function selectLead(lead){
-  selectedLead=lead;
-  document.querySelectorAll('.lcard').forEach(c=>c.classList.remove('selected'));
-  const card=document.querySelector('.lcard[data-id="'+lead.place_id+'"]');
-  if(card)card.classList.add('selected');
-  const stars=lead.rating?'⭐'.repeat(Math.round(lead.rating)):'—';
-  document.getElementById('leadInfo').innerHTML=`<strong>${lead.name}</strong><span>Rating: ${lead.rating||'—'} ${stars}</span><span>📞 ${lead.phone||'—'}</span><span>📍 ${lead.full_address||'—'}</span>${lead.site?`<span>🌐 <a href="${lead.site}" target="_blank" style="color:var(--blue)">${lead.site}</a></span>`:''}${lead.lote_id?`<div style="margin-top:8px"><span class="tag">${lead.lote_id}</span></div>`:''}`;
-  document.getElementById('btnSeq').style.display='block';
-  ['p2PlaceId','p3PlaceId','p4PlaceId','p5PlaceId','p6PlaceId'].forEach(id=>{document.getElementById(id).value=lead.place_id;});
-  if(lead.site)document.getElementById('p3Url').value=lead.site;
-}
-
-async function runP1(){
-  const query=document.getElementById('p1Query').value.trim();
-  const limit=parseInt(document.getElementById('p1Limit').value)||10;
-  if(!query){alert('Ingresa un término de búsqueda');return;}
-  openModal('P1','Scrapeando Google Maps…');
-  showModalLoading(`<div class="anim-radar"><div class="radar-ring"><div class="radar-sweep"></div><div class="radar-dot">🐆</div></div><div class="anim-label">Buscando: <strong>${query}</strong></div><div class="anim-sub">Esto puede tomar 30-60 segundos…</div></div>`);
   try{
-    const r=await fetch(API+'/pipeline/p1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,limit})});
-    const data=await r.json();
-    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
-    const leads=data.leads||[];
-    document.getElementById('statsCard').style.display='block';
-    document.getElementById('statsBody').innerHTML=`<strong>${leads.length} leads encontrados</strong><span>Guardados: ${data.guardados}</span>${data.lote_id?`<span>Lote: <span class="tag">${data.lote_id}</span></span>`:''}`;
-    const cardsHtml=leads.map(l=>`<div class="lcard" data-id="${l.place_id}" onclick='selectLead(${JSON.stringify(l)})'><div class="lcard-top"><span class="lcard-name">${l.name}</span><span class="lcard-stars">${l.rating?'⭐ '+l.rating:''}</span></div><div class="lcard-addr">${l.full_address||'—'}</div>${l.site?`<div class="lcard-url">🌐 ${l.site}</div>`:''}</div>`).join('');
-    const sheetHtml=data.sheet_url?`<a class="batch-sheet-link" href="${data.sheet_url}" target="_blank">📊 Ver Google Sheet en tiempo real →</a>`:'';
-    const pipelineHtml=data.lote_id?`<div style="background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px 14px;margin-bottom:12px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:1.1rem">🚀</span><strong style="font-size:.88rem">Pipeline P2→P6 corriendo en background</strong></div><div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">El sistema está procesando automáticamente los ${leads.length} leads. Reviews → Web → IA → Emails → Envío.</div>${sheetHtml}</div>`:''
-    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">✅</span> ${leads.length} negocios encontrados</div>${pipelineHtml}<div class="lead-cards">${cardsHtml}</div></div>`);
-    document.getElementById('modalTitle').textContent='🚀 '+leads.length+' leads — pipeline corriendo';
-  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
+    const r=await fetch(API+'/health');
+    const d=await r.json();
+    const b=document.getElementById('hdrBadge');
+    if(d.status==='ok'){
+      b.className='status-badge ok';
+      b.innerHTML='<div class="dot"></div>Conectado';
+    }else throw new Error();
+    loadGlobalStats();
+  }catch{
+    const b=document.getElementById('hdrBadge');
+    b.className='status-badge err';
+    b.innerHTML='<div class="dot"></div>Sin conexión';
+  }
 }
 
-async function runP2(){
-  const placeId=document.getElementById('p2PlaceId').value.trim();
-  const maxR=parseInt(document.getElementById('p2Max').value)||10;
-  if(!placeId){alert('Ingresa un Place ID');return;}
-  openModal('P2','Obteniendo reviews…');
-  showModalLoading(`<div class="anim-stars"><div class="star-row">⭐⭐⭐⭐⭐</div><div class="anim-label">Analizando opiniones…</div></div>`);
+async function loadGlobalStats(){
   try{
-    const r=await fetch(API+'/pipeline/p2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:placeId,max_reviews:maxR})});
-    const data=await r.json();
-    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
-    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">⭐</span> ${data.reviews_encontradas} reviews obtenidas</div><p style="font-size:.84rem;color:var(--muted)">Guardadas en Supabase: ${data.reviews_guardadas}</p></div>`);
-    document.getElementById('modalTitle').textContent=data.reviews_encontradas+' reviews';
-  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
+    const r=await fetch(API+'/leads');
+    const leads=await r.json();
+    document.getElementById('statLeads').textContent=leads.length||0;
+    const calientes=leads.filter(l=>l.lead_score>=70).length;
+    const tibios=leads.filter(l=>l.lead_score>=40&&l.lead_score<70).length;
+    document.getElementById('statCalientes').textContent=calientes;
+    document.getElementById('statTibios').textContent=tibios;
+    // enviados no está en leads, ponemos fríos
+    const frios=leads.filter(l=>l.lead_score>0&&l.lead_score<40).length;
+    document.getElementById('statEnviados').textContent=
+      leads.filter(l=>l.craft_emails_ok==='ok').length||'—';
+  }catch{}
 }
 
-async function runP3(){
-  const placeId=document.getElementById('p3PlaceId').value.trim();
-  const url=document.getElementById('p3Url').value.trim();
-  if(!placeId||!url){alert('Ingresa Place ID y URL');return;}
-  openModal('P3','Analizando sitio web…');
-  showModalLoading(`<div class="anim-scan"><div class="browser-box"><div class="browser-bar"><div class="brdot" style="background:#ef4444"></div><div class="brdot" style="background:#f59e0b"></div><div class="brdot" style="background:#10b981"></div></div><div class="browser-content"><div class="scan-line"></div><div class="scan-line"></div><div class="scan-line"></div><div class="scan-line"></div></div></div><div class="anim-label">Escaneando: ${url}</div></div>`);
-  try{
-    const r=await fetch(API+'/pipeline/p3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:placeId,url})});
-    const data=await r.json();
-    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
-    const res=data.resultado||{};
-    const items=Object.entries(res).filter(([k])=>k!=='place_id').map(([k,v])=>`<div class="aitem"><div class="aitem-lbl">${k}</div><div class="aitem-val">${v??'—'}</div></div>`).join('');
-    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">🌐</span> Análisis completado</div><div class="analysis-grid">${items}</div></div>`);
-    document.getElementById('modalTitle').textContent='Análisis web OK';
-  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
-}
-
-async function runP4(){
-  const placeId=document.getElementById('p4PlaceId').value.trim();
-  if(!placeId){alert('Ingresa un Place ID');return;}
-  openModal('P4','Generando análisis IA…');
-  showModalLoading(`<div class="anim-brain"><div class="brain-icon">🧠</div><div class="anim-label">IA analizando el negocio…</div><div class="typing-dots"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`);
-  try{
-    const r=await fetch(API+'/pipeline/p4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:placeId})});
-    const data=await r.json();
-    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
-    const res=data.resultado||{};
-    const score=res.lead_score||0;
-    const temp=score>=70?'🔥 Caliente':score>=40?'🟡 Tibio':'❄️ Frío';
-    const kps=(res.keypoints||[]).map(k=>`<li><span class="kp-bullet">›</span>${k}</li>`).join('');
-    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">🧠</span> Keypoints generados</div><div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap"><div class="aitem" style="flex:1"><div class="aitem-lbl">Lead Score</div><div class="aitem-val" style="font-size:1.4rem;font-weight:800">${score}</div></div><div class="aitem" style="flex:1"><div class="aitem-lbl">Temperatura</div><div class="aitem-val">${temp}</div></div></div>${res.problema_principal?`<div class="aitem" style="margin-bottom:10px"><div class="aitem-lbl">Problema principal</div><div class="aitem-val">${res.problema_principal}</div></div>`:''}${res.oportunidad?`<div class="aitem" style="margin-bottom:14px"><div class="aitem-lbl">Oportunidad</div><div class="aitem-val">${res.oportunidad}</div></div>`:''}${kps?`<ul class="kp-list">${kps}</ul>`:''}</div>`);
-    document.getElementById('modalTitle').textContent='Score: '+score+' '+temp;
-  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
-}
-
-async function runP5(){
-  const placeId=document.getElementById('p5PlaceId').value.trim();
-  if(!placeId){alert('Ingresa un Place ID');return;}
-  openModal('P5','Generando secuencia de emails…');
-  showModalLoading(`<div class="anim-type"><div class="email-icon">✉️</div><div class="anim-label">IA redactando emails…</div><div class="type-bar"><div class="tbar"></div><div class="tbar"></div><div class="tbar"></div><div class="tbar"></div><div class="tbar"></div></div></div>`);
-  try{
-    const r=await fetch(API+'/pipeline/p5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:placeId})});
-    const data=await r.json();
-    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
-    const emails=data.emails||[];
-    const emailsHtml=emails.map((em,i)=>`<div class="email-prev"><div class="email-prev-hdr"><strong>Email ${i+1}: ${em.subject||em.asunto||'—'}</strong>Día ${em.day||em.dia||i+1}</div><div class="email-prev-body">${em.body||em.cuerpo||'—'}</div></div>`).join('');
-    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">✉️</span> ${emails.length} emails generados</div>${emailsHtml}</div>`);
-    document.getElementById('modalTitle').textContent=emails.length+' emails listos';
-  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
-}
-
-async function runP6(){
-  const placeId=document.getElementById('p6PlaceId').value.trim();
-  const toEmail=document.getElementById('p6Email').value.trim();
-  if(!placeId){alert('Ingresa un Place ID');return;}
-  openModal('P6','Enviando emails…');
-  showModalLoading(`<div class="anim-send"><div class="plane-icon">✈️</div><div class="anim-label">Enviando secuencia de emails…</div><div class="anim-sub">Conectando con Brevo…</div></div>`);
-  try{
-    const body={place_id:placeId};if(toEmail)body.to_email=toEmail;
-    const r=await fetch(API+'/pipeline/p6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const data=await r.json();
-    if(!r.ok||data.status==='error')throw new Error(data.error||'Error');
-    showModalResult(`<div class="result-ok"><div class="send-success"><div class="send-icon">🎉</div><h3>¡Emails enviados!</h3><p>${data.enviados||0} email(s) en la secuencia</p>${toEmail?`<p style="margin-top:6px">Destino: <strong>${toEmail}</strong></p>`:''}</div></div>`);
-    document.getElementById('modalTitle').textContent='¡Enviado!';
-  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
-}
-
-async function runSequence(){
-  if(!selectedLead)return;
-  const placeId=selectedLead.place_id;
-  const url=selectedLead.site||'';
-  openModal('SEQ','Procesando '+selectedLead.name+'…');
-  showModalLoading(`<div class="anim-brain"><div class="brain-icon">⚡</div><div class="anim-label">Ejecutando P2 → P3 → P4 → P5…</div><div class="typing-dots"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`);
-  try{
-    const r=await fetch(API+'/pipeline/sequence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:placeId,url,max_reviews:10})});
-    const data=await r.json();
-    const stepHtml=(key,label)=>{const s=data[key];if(!s)return'';const icon=s.status==='ok'?'✅':s.status==='skipped'?'⏭️':'❌';return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem"><span>${icon}</span><strong>${label}</strong><span style="color:var(--muted);margin-left:auto">${s.status}</span></div>`;};
-    showModalResult(`<div class="result-ok"><div class="result-hd"><span class="icon">⚡</span> Secuencia completada</div>${stepHtml('p2','P2 Reviews')}${stepHtml('p3','P3 Web')}${stepHtml('p4','P4 Keypoints')}${stepHtml('p5','P5 Emails')}</div>`);
-    document.getElementById('modalTitle').textContent='Secuencia OK';
-  }catch(err){showModalResult(`<div class="result-err"><div class="result-hd"><span class="icon">❌</span> Error</div><p style="font-size:.85rem;color:var(--muted)">${err.message}</p></div>`);}
-}
-
+// ── Lotes ─────────────────────────────────────────────────────────────────
 function toggleLotes(){
-  const panel=document.getElementById('lotesPanel');
-  const btn=document.getElementById('btnVerLotes');
-  if(panel.classList.contains('show')){panel.classList.remove('show');btn.classList.remove('active');}
-  else{panel.classList.add('show');btn.classList.add('active');loadLotes();}
+  const p=document.getElementById('lotesPanel');
+  const isShow=p.classList.toggle('show');
+  if(isShow)loadLotes();
 }
 
 async function loadLotes(){
   const grid=document.getElementById('lotesGrid');
-  grid.innerHTML='<div style="color:var(--muted);font-size:.85rem;padding:12px 0">Cargando…</div>';
+  grid.innerHTML='<div style="color:var(--muted2);font-size:.84rem;padding:16px 0">Cargando…</div>';
   try{
     const r=await fetch(API+'/lotes');
     const lotes=await r.json();
-    if(!lotes.length){grid.innerHTML='<div style="color:var(--muted);font-size:.85rem;padding:12px 0">No hay lotes todavía. Ejecuta P1 primero.</div>';return;}
-    grid.innerHTML=lotes.map(l=>`<div class="lote-card"><div class="lote-id">${l.lote_id}</div><div class="lote-query">🔍 ${l.query||'—'}</div><div class="lote-meta"><span class="lote-count">${l.count} leads</span><button class="btn-batch" onclick="openBatchForLote('${l.lote_id}')">⚡ Procesar</button></div></div>`).join('');
-  }catch(err){grid.innerHTML=`<div style="color:var(--red);font-size:.85rem">${err.message}</div>`;}
+    if(!lotes.length){
+      grid.innerHTML='<div style="color:var(--muted2);font-size:.84rem;padding:16px 0">No hay lotes aún. Ejecuta P1 para crear el primero.</div>';
+      return;
+    }
+    grid.innerHTML=lotes.map(l=>`
+      <div class="lote-card">
+        <div class="lote-id">${l.lote_id}</div>
+        <div class="lote-query">🔍 ${l.query||'—'}</div>
+        <div class="lote-meta">
+          <span class="lote-count">📋 ${l.count} leads</span>
+          <button class="btn-batch" onclick="openBatchForLote('${l.lote_id}')">⚡ Procesar</button>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    grid.innerHTML='<div style="color:var(--red);font-size:.84rem">Error al cargar lotes</div>';
+  }
 }
 
 function openBatchForLote(loteId){
-  document.getElementById('batchTitle').textContent='Lote: '+loteId;
+  document.getElementById('batchTitle').textContent='Lote: '+loteId.slice(-12)+'…';
   document.getElementById('batchProgFill').style.width='0%';
-  document.getElementById('batchProgTxt').textContent='Iniciando batch…';
-  document.getElementById('batchLeadsList').innerHTML='<div style="color:var(--muted);font-size:.84rem;padding:8px 0">Cargando leads…</div>';
+  document.getElementById('batchProgTxt').textContent='Cargando leads…';
+  document.getElementById('batchLeadsList').innerHTML='';
   document.getElementById('batchSummary').classList.remove('show');
   document.getElementById('batchOverlay').classList.add('show');
   runBatch(loteId);
 }
-
-function closeBatchOverlay(){document.getElementById('batchOverlay').classList.remove('show');}
-function closeBatchModal(e){if(e.target===document.getElementById('batchOverlay'))closeBatchOverlay();}
+function closeBatchOverlay(){document.getElementById('batchOverlay').classList.remove('show')}
+function closeBatchModal(e){if(e.target===document.getElementById('batchOverlay'))closeBatchOverlay()}
 
 async function runBatch(loteId){
   const leadsList=document.getElementById('batchLeadsList');
@@ -487,12 +816,31 @@ async function runBatch(loteId){
     const lote=lotes.find(l=>l.lote_id===loteId);
     if(lote){
       leads=lote.place_ids.map(pid=>({place_id:pid,name:pid}));
-      leadsList.innerHTML=leads.map(l=>{const sid=l.place_id.replace(/[^a-z0-9]/gi,'_');return`<div class="batch-lead-row" id="brow-${sid}"><div class="batch-lead-top"><span class="batch-lead-name">${l.name}</span></div><div class="batch-steps"><span class="step-badge" id="bstep-${sid}-p2">P2</span><span class="step-badge" id="bstep-${sid}-p3">P3</span><span class="step-badge" id="bstep-${sid}-p4">P4</span><span class="step-badge" id="bstep-${sid}-p5">P5</span></div></div>`;}).join('');
+      leadsList.innerHTML=leads.map(l=>{
+        const sid=l.place_id.replace(/[^a-z0-9]/gi,'_');
+        return`<div class="batch-lead-row" id="brow-${sid}">
+          <div class="batch-lead-top">
+            <span class="batch-lead-name">${l.name}</span>
+          </div>
+          <div class="batch-steps">
+            <span class="step-badge" id="bstep-${sid}-p2">P2</span>
+            <span class="step-badge" id="bstep-${sid}-p3">P3</span>
+            <span class="step-badge" id="bstep-${sid}-p4">P4</span>
+            <span class="step-badge" id="bstep-${sid}-p5">P5</span>
+            <span class="step-badge" id="bstep-${sid}-p6">P6</span>
+          </div>
+          <div class="batch-lead-svc" id="bsvc-${sid}"></div>
+        </div>`;
+      }).join('');
     }
   }catch(_){}
-  progTxt.textContent='Procesando '+leads.length+' leads…';
+  progTxt.textContent='Procesando '+leads.length+' leads a través de P2→P6…';
   try{
-    const r=await fetch(API+'/pipeline/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lote_id:loteId})});
+    const r=await fetch(API+'/pipeline/batch',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({lote_id:loteId})
+    });
     const data=await r.json();
     if(data.error){progTxt.textContent='❌ '+data.error;return;}
     const results=data.results||[];
@@ -500,30 +848,281 @@ async function runBatch(loteId){
       const sid=res.place_id.replace(/[^a-z0-9]/gi,'_');
       const row=document.getElementById('brow-'+sid);
       if(row)row.querySelector('.batch-lead-name').textContent=res.name||res.place_id;
-      ['p2','p3','p4','p5'].forEach(step=>{
+      ['p2','p3','p4','p5','p6'].forEach(step=>{
         const badge=document.getElementById('bstep-'+sid+'-'+step);
         if(!badge)return;
         const s=res.steps[step];if(!s)return;
         badge.classList.remove('running');
-        if(s.status==='ok'){badge.classList.add('ok');badge.textContent=step.toUpperCase()+(step==='p2'&&s.reviews?' ✅ '+s.reviews:step==='p4'&&s.score?' '+s.score:' ✅');}
-        else if(s.status==='skipped'){badge.classList.add('skip');badge.textContent=step.toUpperCase()+' —';}
-        else{badge.classList.add('err');badge.textContent=step.toUpperCase()+' ❌';}
+        if(s.status==='ok'){
+          badge.classList.add('ok');
+          const extra=step==='p2'&&s.reviews?' ✅ '+s.reviews
+            :step==='p4'&&s.score?' '+s.score
+            :' ✅';
+          badge.textContent=step.toUpperCase()+extra;
+        }else if(s.status==='skipped'){
+          badge.classList.add('skip');
+          badge.textContent=step.toUpperCase()+' —';
+        }else{
+          badge.classList.add('err');
+          badge.textContent=step.toUpperCase()+' ❌';
+        }
+        // Mostrar servicios recomendados bajo el lead
+        if(step==='p4'&&s.status==='ok'&&s.servicios&&s.servicios.length){
+          const svcEl=document.getElementById('bsvc-'+sid);
+          if(svcEl){
+            svcEl.innerHTML='<div class="svc-chips">'+
+              s.servicios.map((sv,i)=>`<span class="svc-chip${i===0?' main':''}">${sv}</span>`).join('')+
+            '</div>';
+          }
+        }
+      });
+      // Actualizar stepper global con estado del primer lead (representa el lote)
+      const steps2=['p2','p3','p4','p5','p6'];
+      steps2.forEach((step,si)=>{
+        const s=res.steps[step];if(!s)return;
+        const state=s.status==='ok'?'done':s.status==='error'?'err':s.status==='skipped'?null:null;
+        if(state)setStep(si+2,state);
       });
       const pct=Math.round(((idx+1)/results.length)*100);
       progFill.style.width=pct+'%';
       progTxt.textContent=(idx+1)+'/'+results.length+' leads procesados';
     });
     progFill.style.width='100%';
-    progTxt.textContent='✅ Completado — '+data.completados_ok+'/'+data.total_leads+' OK';
+    progTxt.textContent='✅ Pipeline completado — '+data.completados_ok+'/'+data.total_leads+' OK';
+    // Marcar todos los pasos como done al finalizar
+    for(let n=2;n<=6;n++)setStep(n,'done');
+    // Llenar resumen
     document.getElementById('sumTotal').textContent=data.total_leads;
     document.getElementById('sumOk').textContent=data.completados_ok;
     document.getElementById('sumCalientes').textContent=data.calientes??'—';
     document.getElementById('sumTibios').textContent=data.tibios??'—';
     document.getElementById('sumEnviados').textContent=data.enviados??'—';
     document.getElementById('sumLote').textContent=loteId;
-    if(data.sheet_url){const link=document.getElementById('sumSheetLink');link.href=data.sheet_url;link.style.display='inline-flex';}
+    if(data.sheet_url){
+      const link=document.getElementById('sumSheetLink');
+      link.href=data.sheet_url;link.style.display='flex';
+    }
     document.getElementById('batchSummary').classList.add('show');
-  }catch(err){progTxt.textContent='❌ Error: '+err.message;}
+    // Actualizar stats globales
+    loadGlobalStats();
+  }catch(err){
+    progTxt.textContent='❌ Error: '+err.message;
+  }
+}
+
+// ── Modal helpers ─────────────────────────────────────────────────────────
+let _selectedLead=null;
+function showModal(badge,title,bodyHtml,showFoot=false){
+  document.getElementById('modalBadge').textContent=badge;
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').innerHTML=bodyHtml;
+  document.getElementById('modalFoot').style.display=showFoot?'flex':'none';
+  document.getElementById('overlay').classList.add('show');
+}
+function closeOverlay(){document.getElementById('overlay').classList.remove('show')}
+function closeModal(e){if(e.target===document.getElementById('overlay'))closeOverlay()}
+
+function loadingHtml(icon,label,sub=''){
+  return`<div class="anim-center">
+    <div class="anim-icon anim-bounce">${icon}</div>
+    <div class="anim-label">${label}</div>
+    ${sub?`<div class="anim-sub">${sub}</div>`:''}
+    <div class="typing-dots"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>
+  </div>`;
+}
+
+// ── P1 ────────────────────────────────────────────────────────────────────
+async function runP1(){
+  const query=document.getElementById('p1Query').value.trim();
+  const limit=parseInt(document.getElementById('p1Limit').value)||10;
+  if(!query)return document.getElementById('p1Query').focus();
+  document.getElementById('btnLaunch').disabled=true;
+  resetSteps();
+  setStep(1,'active','Scrapeando…');
+  showModal('P1','Scrapeando Google Maps…',
+    loadingHtml('🗺️','Buscando negocios en Google Maps…','Esto puede tomar 30–60 segundos'));
+  try{
+    const r=await fetch(API+'/pipeline/p1',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({query,limit})
+    });
+    const data=await r.json();
+    const leads=data.leads||[];
+    setStep(1,'done',leads.length+' leads');
+    // Indicar que P2→P6 está corriendo en background
+    [2,3,4,5,6].forEach((n,i)=>setTimeout(()=>setStep(n,'active'),i*350));
+    const sheetHtml=data.sheet_url?
+      `<a class="batch-sheet-link" style="margin-top:10px" href="${data.sheet_url}" target="_blank">📊 Ver Google Sheet en tiempo real →</a>`:'';
+    const pipelineHtml=data.lote_id?
+      `<div style="background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.18);border-radius:11px;padding:12px 14px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:1rem">🚀</span><strong style="font-size:.86rem">Pipeline P2→P6 corriendo en background</strong></div>
+        <div style="font-size:.77rem;color:var(--muted2);margin-bottom:8px">El sistema está procesando automáticamente los ${leads.length} leads. Reviews → Web → IA → Emails → Envío.</div>
+        ${sheetHtml}
+      </div>`:''
+    ;
+    showModal('P1',`${leads.length} leads encontrados`,
+      `${pipelineHtml}<div class="result-ok"><div class="result-hd"><span>✅</span>Scrape completado — ${leads.length} negocios</div>
+      <div class="lead-cards">${leads.slice(0,20).map(l=>{
+        const stars='⭐'.repeat(Math.round(l.rating||0));
+        return`<div class="lcard" onclick="selectLead(${JSON.stringify(l).replace(/"/g,'&quot;')})">
+          <div class="lcard-top"><span class="lcard-name">${l.name||'—'}</span><span class="lcard-stars">${stars} ${l.rating||''}</span></div>
+          <div class="lcard-addr">📍 ${l.full_address||'—'}</div>
+          ${l.site?`<div class="lcard-url">🌐 ${l.site}</div>`:''}
+        </div>`;}).join('')}</div></div>`,true);
+    document.getElementById('statsCard').style.display='block';
+    document.getElementById('statsBody').innerHTML=
+      `<strong>${leads.length} leads encontrados</strong>
+      <span>Guardados: ${data.guardados}</span>
+      ${data.lote_id?`<span>Lote: <span class="tag">${data.lote_id}</span></span>`:''}`;
+    loadGlobalStats();
+  }catch(e){
+    setStep(1,'err','Error');
+    showModal('P1','Error',`<div class="result-err"><div class="result-hd">❌ Error al ejecutar P1</div>${e.message}</div>`,true);
+  }finally{
+    document.getElementById('btnLaunch').disabled=false;
+  }
+}
+
+function selectLead(lead){
+  _selectedLead=lead;
+  const stars='⭐'.repeat(Math.round(lead.rating||0));
+  document.getElementById('leadInfo').innerHTML=
+    `<strong>${lead.name}</strong>
+    <span>${stars} ${lead.rating||'—'}</span>
+    <span>📞 ${lead.phone||'—'}</span>
+    <span>📍 ${lead.full_address||'—'}</span>
+    ${lead.site?`<span>🌐 <a href="${lead.site}" target="_blank" style="color:var(--blue)">${lead.site}</a></span>`:''}
+    ${lead.lote_id?`<div style="margin-top:8px"><span class="tag">${lead.lote_id}</span></div>`:''}`;
+  document.getElementById('btnSeq').style.display='block';
+  ['p2PlaceId','p3PlaceId','p4PlaceId','p5PlaceId','p6PlaceId'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value=lead.place_id;
+  });
+  if(lead.site)document.getElementById('p3Url').value=lead.site;
+  document.querySelectorAll('.lcard').forEach(c=>c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+async function runSequence(){
+  if(!_selectedLead)return;
+  const pid=_selectedLead.place_id;
+  const url=_selectedLead.site||'';
+  showModal('SEQ','Ejecutando P2→P5…',loadingHtml('⚡','Procesando secuencia completa…','Reviews → Web → IA → Emails'));
+  try{
+    const r=await fetch(API+'/pipeline/sequence',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({place_id:pid,url,max_reviews:5})
+    });
+    const data=await r.json();
+    showModal('SEQ','Secuencia completada',
+      `<div class="result-ok"><div class="result-hd">✅ P2→P5 completado</div>
+      <ul class="kp-list">
+        <li><span class="kp-bullet">📋</span><div>P2 Reviews: ${data.p2?.status==='ok'?data.p2.reviews_encontradas+' encontradas':'❌ Error'}</div></li>
+        <li><span class="kp-bullet">🌐</span><div>P3 Web: ${data.p3?.status==='ok'?'✅ Analizado':'❌ Error'}</div></li>
+        <li><span class="kp-bullet">🧠</span><div>P4 IA: ${data.p4?.status==='ok'?'Score '+data.p4.resultado?.lead_score:'❌ Error'}</div></li>
+        <li><span class="kp-bullet">✉️</span><div>P5 Emails: ${data.p5?.status==='ok'?data.p5.emails_generados+' emails generados':'❌ Error'}</div></li>
+      </ul></div>`,true);
+  }catch(e){
+    showModal('SEQ','Error',`<div class="result-err">❌ ${e.message}</div>`,true);
+  }
+}
+
+// ── P2 ────────────────────────────────────────────────────────────────────
+async function runP2(){
+  const pid=document.getElementById('p2PlaceId').value.trim();
+  const max=parseInt(document.getElementById('p2Max').value)||10;
+  if(!pid)return;
+  showModal('P2','Obteniendo reviews…',loadingHtml('⭐','Extrayendo reseñas de Google…'));
+  try{
+    const r=await fetch(API+'/pipeline/p2',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:pid,max_reviews:max})});
+    const d=await r.json();
+    showModal('P2','Reviews obtenidas',
+      `<div class="result-ok"><div class="result-hd">✅ ${d.reviews_encontradas} reseñas encontradas</div>
+      <p style="font-size:.84rem;color:var(--muted2)">Guardadas: ${d.reviews_guardadas||d.reviews_encontradas}</p></div>`,true);
+  }catch(e){showModal('P2','Error',`<div class="result-err">❌ ${e.message}</div>`,true);}
+}
+
+// ── P3 ────────────────────────────────────────────────────────────────────
+async function runP3(){
+  const pid=document.getElementById('p3PlaceId').value.trim();
+  const url=document.getElementById('p3Url').value.trim();
+  if(!pid||!url)return;
+  showModal('P3','Analizando sitio web…',loadingHtml('🌐','Escaneando el sitio web…','Buscando tecnología, pixel y redes sociales'));
+  try{
+    const r=await fetch(API+'/pipeline/p3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:pid,url})});
+    const d=await r.json();
+    const res=d.resultado||{};
+    showModal('P3','Análisis web completado',
+      `<div class="result-ok"><div class="result-hd">✅ Sitio analizado</div>
+      <div class="analysis-grid">
+        <div class="aitem"><div class="aitem-lbl">Tecnología</div><div class="aitem-val">${res.website_generator||'N/A'}</div></div>
+        <div class="aitem"><div class="aitem-lbl">GTM</div><div class="aitem-val">${res.website_has_gtm?'✅ Sí':'❌ No'}</div></div>
+        <div class="aitem"><div class="aitem-lbl">FB Pixel</div><div class="aitem-val">${res.website_has_fb_pixel?'✅ Sí':'❌ No'}</div></div>
+        <div class="aitem"><div class="aitem-lbl">Instagram</div><div class="aitem-val">${res.company_instagram||'No encontrado'}</div></div>
+      </div></div>`,true);
+  }catch(e){showModal('P3','Error',`<div class="result-err">❌ ${e.message}</div>`,true);}
+}
+
+// ── P4 ────────────────────────────────────────────────────────────────────
+async function runP4(){
+  const pid=document.getElementById('p4PlaceId').value.trim();if(!pid)return;
+  showModal('P4','Analizando con IA…',loadingHtml('🧠','GPT analizando el negocio…','Detectando problema, score y servicios recomendados'));
+  try{
+    const r=await fetch(API+'/pipeline/p4',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:pid})});
+    const d=await r.json();
+    if(d.error){showModal('P4','Error',`<div class="result-err">❌ ${d.error}</div>`,true);return;}
+    const res=d.resultado||d;
+    const svcs=(res.servicios_recomendados||[]);
+    showModal('P4','Análisis IA completado',
+      `<div class="result-ok"><div class="result-hd">✅ Lead Score: ${res.lead_score||0}/100</div>
+      <ul class="kp-list">
+        <li><span class="kp-bullet">🔴</span><div><strong>Problema:</strong> ${res.problema_principal||'—'}</div></li>
+        <li><span class="kp-bullet">💡</span><div><strong>Oportunidad:</strong> ${res.oportunidad||'—'}</div></li>
+        <li><span class="kp-bullet">⭐</span><div><strong>Servicio principal:</strong> ${res.servicio_principal||'—'}</div></li>
+        ${svcs.length?`<li><span class="kp-bullet">🛠️</span><div><strong>Servicios:</strong>
+          <div class="svc-chips" style="margin-top:6px">${svcs.map((s,i)=>`<span class="svc-chip${i===0?' main':''}">${s}</span>`).join('')}</div>
+        </div></li>`:''}
+        <li><span class="kp-bullet">📝</span><div><strong>Argumento:</strong> ${res.argumento_venta||'—'}</div></li>
+      </ul></div>`,true);
+  }catch(e){showModal('P4','Error',`<div class="result-err">❌ ${e.message}</div>`,true);}
+}
+
+// ── P5 ────────────────────────────────────────────────────────────────────
+async function runP5(){
+  const pid=document.getElementById('p5PlaceId').value.trim();if(!pid)return;
+  showModal('P5','Generando emails…',loadingHtml('✉️','GPT redactando secuencia de 5 emails…','Personalizados con los servicios detectados'));
+  try{
+    const r=await fetch(API+'/pipeline/p5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({place_id:pid})});
+    const d=await r.json();
+    if(d.error){showModal('P5','Error',`<div class="result-err">❌ ${d.error}</div>`,true);return;}
+    const emails=d.emails||[];
+    showModal('P5',emails.length+' emails generados',
+      `<div class="result-ok"><div class="result-hd">✅ Secuencia de ${emails.length} emails lista</div></div>
+      ${emails.map((e,i)=>`
+        <div class="email-prev">
+          <div class="email-prev-hdr"><div style="font-size:.7rem;color:var(--muted)">DÍA ${e.dia||i+1}</div><strong>${e.asunto||e.subject||'—'}</strong></div>
+          <div class="email-prev-body">${e.cuerpo||e.body||'—'}</div>
+        </div>`).join('')}`,true);
+  }catch(e){showModal('P5','Error',`<div class="result-err">❌ ${e.message}</div>`,true);}
+}
+
+// ── P6 ────────────────────────────────────────────────────────────────────
+async function runP6(){
+  const pid=document.getElementById('p6PlaceId').value.trim();if(!pid)return;
+  const email=document.getElementById('p6Email').value.trim();
+  showModal('P6','Enviando email…',loadingHtml('🚀','Enviando email vía Brevo…'));
+  try{
+    const body={place_id:pid};if(email)body.to_email=email;
+    const r=await fetch(API+'/pipeline/p6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.error){showModal('P6','Error',`<div class="result-err">❌ ${d.error}</div>`,true);return;}
+    showModal('P6','Email enviado',
+      `<div class="send-success"><div class="send-icon">✅</div>
+      <h3>Email enviado correctamente</h3>
+      <p>Para: ${d.enviado_a||email||'—'}</p>
+      <p style="margin-top:4px">Asunto: <strong>${d.asunto||'—'}</strong></p>
+      <p style="margin-top:4px">Día de secuencia: ${d.dia||1}</p></div>`,true);
+    loadGlobalStats();
+  }catch(e){showModal('P6','Error',`<div class="result-err">❌ ${e.message}</div>`,true);}
 }
 
 checkHealth();
