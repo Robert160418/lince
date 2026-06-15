@@ -163,8 +163,17 @@ def _add_lead_to_sheet_sync(lote_id: str, lead: dict):
     ws = _get_or_create_ws(lote_id)
     if not ws:
         return None
+    # ── Evitar duplicados: si el place_id ya existe en col A, no agregar ──
+    place_id = lead.get("place_id", "")
+    if place_id:
+        try:
+            existing = ws.find(place_id, in_column=1)
+            if existing:
+                return None  # Ya existe — no duplicar fila
+        except Exception:
+            pass  # No encontrado → continúa y agrega
     row = [
-        lead.get("place_id", ""),
+        place_id,
         lead.get("name", ""),
         lead.get("rating", ""),
         lead.get("phone", ""),
