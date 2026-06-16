@@ -6,13 +6,13 @@ from typing import Optional
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from app.config import SUPABASE_URL, SUPABASE_KEY
+from app.config import SUPABASE_URL, SUPABASE_KEY, TASK_SECRET
 from app.utils.supabase_client import supabase_select
 from app.pipelines.p1_google_maps import scrape_google_maps, procesar_y_guardar_leads
 from app.utils.batch_processor import process_lote
@@ -33,7 +33,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Servir la interfaz web
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 
@@ -42,7 +41,7 @@ async def index():
     return FileResponse(BASE_DIR / "templates" / "index.html", media_type="text/html; charset=utf-8")
 
 
-# ----- Modelos de entrada (campo unificado: place_id) -----
+# ----- Modelos de entrada -----
 
 class P1Body(BaseModel):
     query: str
@@ -101,12 +100,11 @@ async def health():
 
 @app.get("/sheets/ping")
 async def sheets_ping():
-    """Verifica la conexión con Google Sheets sin modificar datos."""
     try:
         from app.utils.google_sheets import get_sheet_url, _get_client
         client = _get_client()
         if not client:
-            return {"status": "error", "detail": "No se pudo crear el cliente de Google Sheets. Revisa GOOGLE_SHEETS_CREDENTIALS y GOOGLE_SHEET_ID."}
+            return {"status": "error", "detail": "No se pudo crear el cliente de Google Sheets."}
         url = await get_sheet_url()
         return {"status": "ok", "sheet_url": url}
     except Exception as e:
@@ -115,7 +113,6 @@ async def sheets_ping():
 
 @app.get("/debug")
 async def debug():
-    # No exponer secretos: solo indicar si la configuración está cargada
     return {
         "supabase_url": SUPABASE_URL,
         "supabase_key_primeros_10": "configurada" if SUPABASE_KEY else None,
@@ -135,7 +132,6 @@ async def test_db():
 
 @app.get("/lotes")
 async def get_lotes():
-    """Devuelve todos los lotes (grupos de leads por scrape) con conteo y estado."""
     leads = await supabase_select("leads")
     lotes: dict = {}
     for lead in leads:
@@ -149,40 +145,32 @@ async def get_lotes():
             }
         lotes[lid]["count"] += 1
         lotes[lid]["place_ids"].append(lead.get("place_id", ""))
-    # Ordenar más recientes primero (lote_id lleva timestamp al final)
     return sorted(lotes.values(), key=lambda x: x["lote_id"], reverse=True)
 
 
 @app.post("/pipeline/batch")
 async def ejecutar_batch(body: BatchBody):
-    """Ejecuta P2→P3→P4→P5 en todos los leads de un lote y actualiza Google Sheets."""
     resultado = await process_lote(body.lote_id)
     return resultado
 
 
 @app.post("/pipeline/p1")
 async def ejecutar_p1(body: P1Body, background_tasks: BackgroundTasks):
-    """
-    Scrape Google Maps y lanza el pipeline completo (P2→P6) en segundo plano.
-    Responde inmediatamente con el lote_id y los leads encontrados.
-    El Google Sheet se va llenando solo en tiempo real mientras el pipeline trabaja.
-    """
     resultados = await scrape_google_maps(query=body.query, limit=body.limit)
     resultado = await procesar_y_guardar_leads(resultados, query=body.query)
 
     lote_id = resultado.get("lote_id", "") if isinstance(resultado, dict) else ""
 
-    # Lanzar P2→P6 automáticamente en background para todo el lote
     if lote_id:
         background_tasks.add_task(process_lote, lote_id)
 
     return {
         "status": "ok",
-        "message": f"Lote '{lote_id}' creado. Pipeline P2→P6 corriendo en segundo plano. Revisa el Google Sheet para ver el progreso en tiempo real.",
+        "message": f"Lote '{lote_id}' creado. Pipeline P2-P6 corriendo en segundo plano.",
         "encontrados": len(resultados),
         "guardados": resultado.get("guardados", 0) if isinstance(resultado, dict) else resultado,
         "lote_id": lote_id,
-        "sheet_url": f"https://docs.google.com/spreadsheets/d/1hgNERuux2eZ1MDv-tgCDp_qva-fqf1RHF9Qu4Qysjjg/edit",
+        "sheet_url": "https://docs.google.com/spreadsheets/d/1hgNERuux2eZ1MDv-tgCDp_qva-fqf1RHF9Qu4Qysjjg/edit",
         "leads": resultados,
     }
 
@@ -225,7 +213,6 @@ async def ejecutar_p5(body: P5Body):
 
 @app.post("/pipeline/p6")
 async def ejecutar_p6(body: P6Body):
-    # Si se indica un destinatario, registrarlo antes de enviar
     if body.to_email:
         await set_recipient_email(body.place_id, body.to_email)
     resultado = await ejecutar_secuencia(body.place_id)
@@ -236,10 +223,8 @@ async def ejecutar_p6(body: P6Body):
 
 @app.post("/pipeline/sequence")
 async def ejecutar_secuencia_completa(body: SequenceBody):
-    """Ejecuta P2 -> P3 -> P4 -> P5 en cadena para un lead."""
     salida = {"status": "ok", "place_id": body.place_id}
 
-    # P2: reviews
     try:
         reviews = await obtener_reviews(place_id=body.place_id, max_reviews=body.max_reviews)
         guardadas = await procesar_y_guardar_reviews(body.place_id, reviews)
@@ -247,14 +232,12 @@ async def ejecutar_secuencia_completa(body: SequenceBody):
     except Exception as e:
         salida["p2"] = {"status": "error", "error": str(e)}
 
-    # P3: análisis del sitio web
     try:
         datos = await analizar_y_guardar(place_id=body.place_id, url=body.url)
         salida["p3"] = {"status": "ok", "resultado": datos}
     except Exception as e:
         salida["p3"] = {"status": "error", "error": str(e)}
 
-    # P4: keypoints con IA
     try:
         kp = await generar_keypoints(body.place_id)
         if kp.get("error"):
@@ -264,7 +247,6 @@ async def ejecutar_secuencia_completa(body: SequenceBody):
     except Exception as e:
         salida["p4"] = {"status": "error", "error": str(e)}
 
-    # P5: secuencia de emails con IA
     try:
         em = await generar_secuencia_emails(body.place_id)
         if em.get("error"):
@@ -276,3 +258,21 @@ async def ejecutar_secuencia_completa(body: SequenceBody):
         salida["p5"] = {"status": "error", "error": str(e)}
 
     return salida
+
+
+# ── Tareas programadas ────────────────────────────────────────────────────────
+
+@app.post("/tasks/daily-sequence")
+async def tarea_secuencia_diaria(x_task_secret: str = Header(default="")):
+    """
+    Endpoint protegido que ejecuta la secuencia diaria de emails.
+    Llamado por el cron del VPS cada manana via curl.
+
+    Header requerido: X-Task-Secret: <valor de TASK_SECRET en .env>
+    """
+    if TASK_SECRET and x_task_secret != TASK_SECRET:
+        raise HTTPException(status_code=403, detail="Acceso no autorizado")
+
+    from app.tasks.daily_sequence import run_daily_sequence
+    resultado = await run_daily_sequence()
+    return {"status": "ok", **resultado}

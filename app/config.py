@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Carga el .env desde la raíz del proyecto
+# Carga el .env desde la raiz del proyecto
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
@@ -24,8 +24,10 @@ if not GOOGLE_SHEETS_CREDENTIALS and GOOGLE_SHEETS_CREDENTIALS_PATH:
     except FileNotFoundError:
         GOOGLE_SHEETS_CREDENTIALS = None
 
+TASK_SECRET = os.getenv("TASK_SECRET", "")
+
 SUPABASE_HEADERS = {
     "apikey": SUPABASE_KEY,
-    "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json"
+    "Authorization": "Bearer " + (SUPABASE_KEY or ""),
+    "Content-Type": "application/json",
 }
