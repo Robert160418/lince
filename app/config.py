@@ -26,6 +26,12 @@ if not GOOGLE_SHEETS_CREDENTIALS and GOOGLE_SHEETS_CREDENTIALS_PATH:
 
 TASK_SECRET = os.getenv("TASK_SECRET", "")
 
+# Puente hacia portal.noboweb.com — sincroniza leads calificados (P4) al CRM
+# del portal. Si quedan vacíos, la sincronización simplemente se omite
+# (ver app/utils/portal_bridge.py) y Lince sigue funcionando normal.
+PORTAL_WEBHOOK_URL = os.getenv("PORTAL_WEBHOOK_URL", "")
+LINCE_WEBHOOK_SECRET = os.getenv("LINCE_WEBHOOK_SECRET", "")
+
 SUPABASE_HEADERS = {
     "apikey": SUPABASE_KEY,
     "Authorization": "Bearer " + (SUPABASE_KEY or ""),

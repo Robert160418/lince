@@ -25,6 +25,7 @@ from app.pipelines.p3_website_analysis import analizar_y_guardar
 from app.pipelines.p4_keypoints import generar_keypoints
 from app.pipelines.p5_email_generator import generar_secuencia_emails
 from app.pipelines.p6_email_sender import ejecutar_secuencia
+from app.utils.portal_bridge import push_lead_to_portal
 
 
 async def process_lote(lote_id: str) -> dict:
@@ -167,6 +168,10 @@ async def process_lote(lote_id: str) -> dict:
                     })
                     # ← Color de la fila se aplica automáticamente en update_lead_in_sheet
                 print(f"  P4 ok — Score: {lead_score} {temp} | Servicios: {servicios_str}")
+
+                # Sincroniza el lead calificado al CRM del portal (portal.noboweb.com).
+                # No bloquea el pipeline si falla — ver app/utils/portal_bridge.py.
+                await push_lead_to_portal(lead, kp)
         except Exception as e:
             print(f"  P4 error: {e}")
             result["steps"]["p4"] = {"status": "error", "error": str(e)}
