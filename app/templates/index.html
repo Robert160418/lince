@@ -471,7 +471,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     </div>
     <div class="stat-card">
       <div class="stat-icon green">✉️</div>
-      <div><div class="stat-val" id="statEnviados" style="color:var(--green)">—</div><div class="stat-lbl">Enviados</div></div>
+      <div><div class="stat-val" id="statEnviados" style="color:var(--green)">—</div><div class="stat-lbl">Emails listos</div></div>
     </div>
   </div>
 
@@ -610,6 +610,17 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
           <span style="color:var(--muted);font-size:.82rem">Ejecuta P1 y haz click en un lead para ver su información aquí.</span>
         </div>
         <button class="btn-seq" id="btnSeq" style="display:none" onclick="runSequence()">⚡ Ejecutar P2→P5</button>
+        <div id="emailInputWrap" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+          <label style="font-size:.68rem;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">📧 Email destino (P6)</label>
+          <div style="display:flex;gap:6px">
+            <input type="email" id="leadEmail" placeholder="cliente@empresa.com"
+              style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:rgba(6,9,15,.6);color:var(--txt);font-size:.82rem;font-family:inherit;outline:none;transition:border-color .18s"
+              onfocus="this.style.borderColor='rgba(59,130,246,.5)'" onblur="this.style.borderColor='var(--border)'"
+              oninput="document.getElementById('p6Email').value=this.value"/>
+            <button onclick="saveLeadEmail(event)" style="padding:8px 13px;border:none;border-radius:8px;background:var(--grad);color:#fff;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .18s;white-space:nowrap" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">💾 Guardar</button>
+          </div>
+          <div id="emailSaveMsg" style="font-size:.72rem;color:var(--green);margin-top:5px;display:none">✅ Email guardado</div>
+        </div>
       </div>
       <div class="pcrd" id="statsCard" style="display:none">
         <h3>Último lote</h3>
@@ -994,6 +1005,14 @@ function selectLead(lead){
     ${lead.site?`<span>🌐 <a href="${lead.site}" target="_blank" style="color:var(--blue)">${lead.site}</a></span>`:''}
     ${lead.lote_id?`<div style="margin-top:8px"><span class="tag">${lead.lote_id}</span></div>`:''}`;
   document.getElementById('btnSeq').style.display='block';
+  // Show email input for P6
+  document.getElementById('emailInputWrap').style.display='block';
+  const emailEl=document.getElementById('leadEmail');
+  if(emailEl){
+    emailEl.value=lead.contact_email||'';
+    const p6emailEl=document.getElementById('p6Email');
+    if(p6emailEl)p6emailEl.value=lead.contact_email||'';
+  }
   ['p2PlaceId','p3PlaceId','p4PlaceId','p5PlaceId','p6PlaceId'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value=lead.place_id;
   });
@@ -1123,6 +1142,25 @@ async function runP6(){
       <p style="margin-top:4px">Día de secuencia: ${d.dia||1}</p></div>`,true);
     loadGlobalStats();
   }catch(e){showModal('P6','Error',`<div class="result-err">❌ ${e.message}</div>`,true);}
+}
+
+
+// ── Save recipient email ──────────────────────────────────────────────────
+async function saveLeadEmail(ev){
+  if(!_selectedLead)return;
+  const email=document.getElementById('leadEmail').value.trim();
+  if(!email)return;
+  const pid=_selectedLead.place_id;
+  const btn=ev.currentTarget;
+  const orig=btn.innerHTML;
+  btn.innerHTML='⏳';btn.disabled=true;
+  try{
+    await fetch(`${API}/setup/recipient-email/${encodeURIComponent(pid)}/${encodeURIComponent(email)}`);
+    document.getElementById('p6Email').value=email;
+    const msg=document.getElementById('emailSaveMsg');
+    if(msg){msg.style.display='block';setTimeout(()=>msg.style.display='none',3000);}
+  }catch(e){console.error('saveLeadEmail:',e);}
+  finally{btn.innerHTML=orig;btn.disabled=false;}
 }
 
 checkHealth();
