@@ -4,7 +4,7 @@ from app.config import BREVO_API_KEY
 from app.utils.supabase_client import supabase_select, supabase_update_lead
 
 BREVO_URL = "https://api.brevo.com/v3/smtp/email"
-FROM_EMAIL = "roberto@lince.noboweb.com"
+FROM_EMAIL = "roberto@noboweb.com"
 FROM_NAME = "Roberto | Lince"
 
 
