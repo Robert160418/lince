@@ -1,0 +1,62 @@
+name: Lince 2.0 Safe Tests
+
+on:
+  push:
+    branches:
+      - lince-v2-hardening
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  safe-tests:
+    name: Safe tests - Python 3.11
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      SUPABASE_URL: https://example.supabase.co
+      SUPABASE_KEY: test-supabase-key
+      OPENAI_API_KEY: sk-test-lince-v2
+      APIFY_API_KEY: apify-test-key
+      BREVO_API_KEY: brevo-test-key
+
+      PORTAL_WEBHOOK_URL: ""
+      LINCE_WEBHOOK_SECRET: ""
+
+      GOOGLE_SHEET_ID: ""
+      GOOGLE_SHEETS_CREDENTIALS: ""
+      GOOGLE_SHEETS_CREDENTIALS_PATH: ""
+
+      PYTHONPATH: .
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Mostrar versión de Python
+        run: python --version
+
+      - name: Actualizar pip
+        run: python -m pip install --upgrade pip
+
+      - name: Instalar dependencias de Lince
+        run: pip install -r requirements.txt
+
+      - name: Instalar herramientas de prueba
+        run: pip install pytest pytest-asyncio
+
+      - name: Ejecutar solamente pruebas seguras de Lince 2.0
+        run: pytest tests/test_lince_v2_safe.py -v --tb=short
