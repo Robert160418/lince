@@ -1156,6 +1156,59 @@ async def test_p6_primer_email_requiere_aprobacion_y_no_envia(
 
 
 @pytest.mark.asyncio
+async def test_p6_seguimiento_requiere_aprobacion_y_no_envia(
+    monkeypatch,
+):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 1,
+        "sent_at_day1": "2026-08-23T10:00:00+00:00",
+        "replied": False,
+        "sequence_stopped": False,
+        "email_2_subject": "Seguimiento",
+        "email_2_body": "Mensaje de seguimiento.",
+    }
+
+    async def fake_select(table, filters):
+        return [row]
+
+    async def fail_patch(*args, **kwargs):
+        raise AssertionError(
+            "No debe reservarse un email sin aprobación."
+        )
+
+    def fail_brevo(*args, **kwargs):
+        raise AssertionError(
+            "Brevo no debe ejecutarse sin aprobación."
+        )
+
+    monkeypatch.setattr(
+        p6_email_sender,
+        "supabase_select",
+        fake_select,
+    )
+    monkeypatch.setattr(
+        p6_email_sender,
+        "_patch_email_row",
+        fail_patch,
+    )
+    monkeypatch.setattr(
+        p6_email_sender,
+        "_enviar_brevo",
+        fail_brevo,
+    )
+
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"]
+    )
+
+    assert resultado["status"] == "pending_approval"
+    assert resultado["dia"] == 2
+
+
+@pytest.mark.asyncio
 async def test_p6_estado_incierto_bloquea_reintento(
     monkeypatch,
 ):

@@ -353,7 +353,8 @@ async def ejecutar_secuencia(
 
     SEGURIDAD LINCE 2.0:
 
-    - El primer email exige aprobación humana explícita.
+        - TEMPORAL: todos los contactos requieren aprobación humana
+            hasta implementar detección fiable de respuestas.
     - Nunca envía si el lead respondió.
     - Nunca envía si la secuencia está detenida.
     - Nunca envía dos veces el mismo día automáticamente.
@@ -494,24 +495,22 @@ async def ejecutar_secuencia(
     )
 
     # ---------------------------------------------------------------
-    # APROBACIÓN HUMANA PARA PRIMER CONTACTO
+    # APROBACIÓN HUMANA PARA CADA CONTACTO
     # ---------------------------------------------------------------
 
-    if (
-        next_day == 1
-        and not approved_by_human
-    ):
+    if not approved_by_human:
 
         return {
             "status":
                 "pending_approval",
 
             "dia":
-                1,
+                next_day,
 
             "mensaje": (
-                "El primer contacto requiere "
-                "aprobación humana explícita."
+                "TEMPORAL: todos los contactos requieren "
+                "aprobación humana hasta implementar detección "
+                "fiable de respuestas."
             ),
         }
 
