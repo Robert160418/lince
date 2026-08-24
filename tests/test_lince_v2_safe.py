@@ -626,9 +626,9 @@ async def test_p5_conflicto_insert_no_reintenta_openai(
     lead, fake_client, _, _ = _configurar_p5_aislado(
         monkeypatch,
         {
-            "status": 23505,
-            "status_code": 23505,
-            "error": "duplicate key on emails_place_id",
+            "status": 409,
+            "status_code": 409,
+            "error": "duplicate key value violates unique constraint",
         },
     )
 
