@@ -84,6 +84,32 @@ def _email_valido(value: Any) -> bool:
     )
 
 
+def _es_conflicto_insert(resultado: Any) -> bool:
+    """
+    Detecta un conflicto de unicidad devuelto por Supabase.
+    """
+
+    if not isinstance(resultado, dict):
+        return False
+
+    status_code = resultado.get(
+        "status_code",
+        resultado.get("status"),
+    )
+
+    if str(status_code) == "409":
+        return True
+
+    error = str(
+        resultado.get("error") or ""
+    ).lower()
+
+    return "23505" in error or (
+        "unique" in error
+        and "place_id" in error
+    )
+
+
 def _contar_palabras(texto: str) -> int:
     """
     Cuenta palabras de un texto.
@@ -949,10 +975,46 @@ Responde ÚNICAMENTE JSON válido:
             f"email_{i}_body"
         ] = email["cuerpo"]
 
-    await supabase_insert(
+    insert_resultado = await supabase_insert(
         "emails",
         email_data,
     )
+
+    if not isinstance(insert_resultado, dict):
+
+        return {
+            "error": (
+                "No se pudo guardar la secuencia de emails: "
+                "respuesta inválida de Supabase."
+            )
+        }
+
+    status_code = insert_resultado.get(
+        "status_code",
+        insert_resultado.get("status"),
+    )
+
+    if status_code not in (200, 201):
+
+        if _es_conflicto_insert(
+            insert_resultado
+        ):
+
+            return {
+                "error": (
+                    "La secuencia ya existe o fue creada "
+                    "concurrentemente para este place_id."
+                ),
+                "status": "already_exists",
+            }
+
+        return {
+            "error": (
+                "No se pudo guardar la secuencia de emails. "
+                "No se continuará con el procesamiento del lead."
+            ),
+            "status": "insert_failed",
+        }
 
     # ---------------------------------------------------------------
     # ACTUALIZAR LEAD

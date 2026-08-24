@@ -143,6 +143,40 @@ def _lead_base(
     return lead
 
 
+def _p5_valid_ai_payload():
+    return {
+        "emails": [
+            {
+                "dia": dia,
+                "asunto": f"Asunto {dia}",
+                "cuerpo": (
+                    f"Hola, este es un mensaje de prueba para el día {dia}."
+                ),
+            }
+            for dia in range(1, 6)
+        ]
+    }
+
+
+def _p5_lead_and_keypoints():
+    lead = _lead_base(score_fields=False)
+    keypoints = {
+        "place_id": lead["place_id"],
+        "painpoints_and_opportunities": {
+            "problema_principal": "Falta una revisión digital.",
+            "oportunidad": "Mejorar la presencia digital.",
+        },
+        "keypoints_for_personalization": {
+            "argumento_venta": "Podemos revisar la presencia digital.",
+            "servicio_principal": "SEO / Posicionamiento en Google",
+        },
+        "servicios_recomendados": [
+            "SEO / Posicionamiento en Google"
+        ],
+    }
+    return lead, keypoints
+
+
 # ===================================================================
 # P2 — REVIEWS
 # ===================================================================
@@ -465,6 +499,145 @@ async def test_p4_openai_no_puede_cambiar_score(
 
     assert len(inserts) == 1
     assert len(updates) == 1
+
+
+def _configurar_p5_aislado(
+    monkeypatch,
+    insert_result,
+):
+    lead, keypoints = _p5_lead_and_keypoints()
+    inserts = []
+    updates = []
+    fake_client = FakeOpenAIClient(
+        _p5_valid_ai_payload()
+    )
+
+    async def fake_select(table, filters):
+        if table == "leads":
+            return [lead]
+        if table == "keypoints":
+            return [keypoints]
+        if table == "emails":
+            return []
+        return []
+
+    async def fake_insert(table, data):
+        inserts.append((table, data))
+        return insert_result
+
+    async def fake_update(place_id, data):
+        updates.append((place_id, data))
+        return {"status": 200}
+
+    monkeypatch.setattr(
+        p5_email_generator,
+        "supabase_select",
+        fake_select,
+    )
+    monkeypatch.setattr(
+        p5_email_generator,
+        "supabase_insert",
+        fake_insert,
+    )
+    monkeypatch.setattr(
+        p5_email_generator,
+        "supabase_update_lead",
+        fake_update,
+    )
+    monkeypatch.setattr(
+        p5_email_generator,
+        "client",
+        fake_client,
+    )
+
+    return lead, fake_client, inserts, updates
+
+
+@pytest.mark.asyncio
+async def test_p5_insert_exitoso_devuelve_guardado_y_aprobacion(
+    monkeypatch,
+):
+    lead, _, inserts, updates = _configurar_p5_aislado(
+        monkeypatch,
+        {"status": 201, "status_code": 201},
+    )
+
+    resultado = await p5_email_generator.generar_secuencia_emails(
+        lead["place_id"]
+    )
+
+    assert resultado["guardado"] is True
+    assert resultado["requiere_aprobacion"] is True
+    assert len(inserts) == 1
+    assert len(updates) == 1
+
+
+@pytest.mark.asyncio
+async def test_p5_insert_fallido_no_devuelve_guardado(
+    monkeypatch,
+):
+    lead, _, inserts, updates = _configurar_p5_aislado(
+        monkeypatch,
+        {
+            "status": 500,
+            "status_code": 500,
+            "error": "fallo de base de datos",
+        },
+    )
+
+    resultado = await p5_email_generator.generar_secuencia_emails(
+        lead["place_id"]
+    )
+
+    assert "error" in resultado
+    assert resultado.get("guardado") is not True
+    assert len(inserts) == 1
+    assert updates == []
+
+
+@pytest.mark.asyncio
+async def test_p5_conflicto_insert_se_trata_como_existente(
+    monkeypatch,
+):
+    lead, fake_client, inserts, updates = _configurar_p5_aislado(
+        monkeypatch,
+        {
+            "status": 409,
+            "status_code": 409,
+            "error": "duplicate key value (23505) place_id",
+        },
+    )
+
+    resultado = await p5_email_generator.generar_secuencia_emails(
+        lead["place_id"]
+    )
+
+    assert resultado["status"] == "already_exists"
+    assert "ya existe" in resultado["error"]
+    assert len(inserts) == 1
+    assert updates == []
+    assert fake_client.chat.completions.calls == 1
+
+
+@pytest.mark.asyncio
+async def test_p5_conflicto_insert_no_reintenta_openai(
+    monkeypatch,
+):
+    lead, fake_client, _, _ = _configurar_p5_aislado(
+        monkeypatch,
+        {
+            "status": 23505,
+            "status_code": 23505,
+            "error": "duplicate key on emails_place_id",
+        },
+    )
+
+    resultado = await p5_email_generator.generar_secuencia_emails(
+        lead["place_id"]
+    )
+
+    assert resultado["status"] == "already_exists"
+    assert fake_client.chat.completions.calls == 1
 
 
 # ===================================================================
