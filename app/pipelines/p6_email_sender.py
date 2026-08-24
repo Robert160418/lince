@@ -495,27 +495,7 @@ async def ejecutar_secuencia(
     )
 
     # ---------------------------------------------------------------
-    # APROBACIÓN HUMANA PARA CADA CONTACTO
-    # ---------------------------------------------------------------
-
-    if not approved_by_human:
-
-        return {
-            "status":
-                "pending_approval",
-
-            "dia":
-                next_day,
-
-            "mensaje": (
-                "TEMPORAL: todos los contactos requieren "
-                "aprobación humana hasta implementar detección "
-                "fiable de respuestas."
-            ),
-        }
-
-    # ---------------------------------------------------------------
-    # CONTENIDO
+    # CONTENIDO Y PREVIEW
     # ---------------------------------------------------------------
 
     asunto = row.get(
@@ -539,7 +519,6 @@ async def ejecutar_secuencia(
     )
 
     if not asunto or not cuerpo:
-
         return {
             "error": (
                 f"No hay contenido completo "
@@ -547,20 +526,7 @@ async def ejecutar_secuencia(
             )
         }
 
-    if not _email_valido(
-        to_email
-    ):
-
-        return {
-            "error": (
-                "No existe un email de destinatario "
-                "válido. Revisa recipient_email."
-            )
-        }
-
-    to_email = str(
-        to_email
-    ).strip()
+    recipient_email_valid = _email_valido(to_email)
 
     # Protección adicional.
     # Si sent_at del próximo día ya existe, no intentar enviar.
@@ -579,6 +545,41 @@ async def ejecutar_secuencia(
                 "No se enviará nuevamente."
             ),
         }
+
+    # ---------------------------------------------------------------
+    # APROBACIÓN HUMANA PARA CADA CONTACTO
+    # ---------------------------------------------------------------
+
+    if not approved_by_human:
+        return {
+            "status": "pending_approval",
+            "dia": next_day,
+            "requiere_aprobacion": True,
+            "preview": {
+                "subject": asunto,
+                "body": cuerpo,
+                "recipient_email": to_email,
+                "recipient_name": to_name,
+                "recipient_email_valid": recipient_email_valid,
+            },
+            "mensaje": (
+                "TEMPORAL: todos los contactos requieren "
+                "aprobación humana hasta implementar detección "
+                "fiable de respuestas."
+            ),
+        }
+
+    if not recipient_email_valid:
+        return {
+            "error": (
+                "No existe un email de destinatario "
+                "válido. Revisa recipient_email."
+            )
+        }
+
+    to_email = str(
+        to_email
+    ).strip()
 
     # ---------------------------------------------------------------
     # RESERVAR EL DÍA ANTES DE BREVO

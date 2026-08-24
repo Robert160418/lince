@@ -1153,6 +1153,12 @@ async def test_p6_primer_email_requiere_aprobacion_y_no_envia(
     )
 
     assert resultado["dia"] == 1
+    assert "preview" in resultado
+    assert resultado["preview"]["subject"] == "Asunto test"
+    assert resultado["preview"]["body"] == "Cuerpo test"
+    assert resultado["preview"]["recipient_email"] == "contacto@example.com"
+    assert resultado["preview"]["recipient_name"] == "Negocio Seguro"
+    assert resultado["preview"]["recipient_email_valid"] is True
 
 
 @pytest.mark.asyncio
@@ -1206,6 +1212,9 @@ async def test_p6_seguimiento_requiere_aprobacion_y_no_envia(
 
     assert resultado["status"] == "pending_approval"
     assert resultado["dia"] == 2
+    assert "preview" in resultado
+    assert resultado["preview"]["subject"] == "Seguimiento"
+    assert resultado["preview"]["body"] == "Mensaje de seguimiento."
 
 
 @pytest.mark.asyncio
@@ -1915,3 +1924,147 @@ def test_main_daily_sequence_fail_closed_sin_secret(
     )
 
     assert response.status_code == 503
+# ===================================================================
+# PREVIEW P6
+# ===================================================================
+
+@pytest.mark.asyncio
+async def test_p6_email_invalido_devuelve_preview(
+    monkeypatch,
+):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "invalido",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto",
+        "email_1_body": "Cuerpo",
+    }
+
+    async def fake_select(table, filters):
+        return [row]
+
+    def fail_brevo(*args, **kwargs):
+        raise AssertionError("Brevo no debe ejecutarse.")
+
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"]
+    )
+
+    assert resultado["status"] == "pending_approval"
+    assert resultado["preview"]["recipient_email"] == "invalido"
+    assert resultado["preview"]["recipient_email_valid"] is False
+
+@pytest.mark.asyncio
+async def test_p6_email_invalido_bloquea_aprobacion(
+    monkeypatch,
+):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "invalido",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto",
+        "email_1_body": "Cuerpo",
+    }
+
+    async def fake_select(table, filters):
+        return [row]
+
+    def fail_brevo(*args, **kwargs):
+        raise AssertionError("Brevo no debe ejecutarse.")
+
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"],
+        approved_by_human=True
+    )
+
+    assert "error" in resultado
+    assert "válido" in resultado["error"]
+
+@pytest.mark.parametrize("replied, sequence_stopped", [
+    (True, False),
+    (False, True),
+])
+@pytest.mark.asyncio
+async def test_p6_replied_o_stopped_no_da_preview(
+    monkeypatch,
+    replied,
+    sequence_stopped,
+):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "replied": replied,
+        "sequence_stopped": sequence_stopped,
+        "email_1_subject": "Asunto",
+        "email_1_body": "Cuerpo",
+    }
+
+    async def fake_select(table, filters):
+        return [row]
+
+    def fail_patch(*args, **kwargs):
+        raise AssertionError("_patch_email_row NO debe llamarse.")
+
+    def fail_brevo(*args, **kwargs):
+        raise AssertionError("Brevo no debe ejecutarse.")
+
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"]
+    )
+
+    assert resultado["status"] == "detenida"
+    assert "preview" not in resultado
+
+@pytest.mark.asyncio
+async def test_p6_sent_at_inconsistente_bloquea_antes_de_preview(
+    monkeypatch,
+):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "sent_at_day1": "2026-08-23T10:00:00+00:00",
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto",
+        "email_1_body": "Cuerpo",
+    }
+
+    async def fake_select(table, filters):
+        return [row]
+
+    def fail_patch(*args, **kwargs):
+        raise AssertionError("_patch_email_row NO debe llamarse.")
+
+    def fail_brevo(*args, **kwargs):
+        raise AssertionError("Brevo NO debe ejecutarse.")
+
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"]
+    )
+
+    assert resultado["status"] == "manual_review_required"
+    assert "preview" not in resultado
