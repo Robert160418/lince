@@ -1257,3 +1257,370 @@ def test_invariantes_lince_v2():
         daily_sequence.HORAS_ENTRE_EMAILS
         == 24
     )
+
+    # ===================================================================
+# MAIN API — SEGURIDAD DE ENDPOINTS
+# ===================================================================
+
+
+def test_main_p6_bloqueado_si_task_secret_no_existe(
+    monkeypatch,
+):
+    """
+    Si TASK_SECRET no está configurado,
+    /pipeline/p6 debe fallar cerrado con 503.
+
+    P6 nunca debe ejecutarse.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    async def p6_prohibido(*args, **kwargs):
+        raise AssertionError(
+            "P6 no debía ejecutarse sin TASK_SECRET."
+        )
+
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "",
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "ejecutar_secuencia",
+        p6_prohibido,
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/pipeline/p6",
+        json={
+            "place_id": "TEST_PLACE_001",
+            "approved_by_human": True,
+        },
+    )
+
+    assert response.status_code == 503
+
+
+def test_main_p6_rechaza_secret_incorrecto(
+    monkeypatch,
+):
+    """
+    Un secreto incorrecto debe devolver 403
+    antes de llegar a P6.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    async def p6_prohibido(*args, **kwargs):
+        raise AssertionError(
+            "P6 no debía ejecutarse con secreto incorrecto."
+        )
+
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "secret-test-correcto",
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "ejecutar_secuencia",
+        p6_prohibido,
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/pipeline/p6",
+        headers={
+            "X-Task-Secret":
+                "secret-equivocado",
+        },
+        json={
+            "place_id": "TEST_PLACE_001",
+            "approved_by_human": True,
+        },
+    )
+
+    assert response.status_code == 403
+
+
+def test_main_p6_pasa_aprobacion_humana_al_motor(
+    monkeypatch,
+):
+    """
+    El endpoint debe transmitir explícitamente
+    approved_by_human al motor P6.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    llamadas = []
+
+    async def fake_p6(
+        place_id,
+        approved_by_human=False,
+    ):
+        llamadas.append({
+            "place_id":
+                place_id,
+
+            "approved_by_human":
+                approved_by_human,
+        })
+
+        return {
+            "status":
+                "pending_approval"
+        }
+
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "secret-test",
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "ejecutar_secuencia",
+        fake_p6,
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/pipeline/p6",
+        headers={
+            "X-Task-Secret":
+                "secret-test",
+        },
+        json={
+            "place_id":
+                "TEST_PLACE_001",
+
+            "approved_by_human":
+                False,
+        },
+    )
+
+    assert response.status_code == 200
+
+    assert len(llamadas) == 1
+
+    assert (
+        llamadas[0]["approved_by_human"]
+        is False
+    )
+
+
+def test_main_antiguo_get_recipient_email_ya_no_existe():
+    """
+    La antigua ruta GET que modificaba destinatarios
+    debe haber desaparecido.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.get(
+        "/setup/recipient-email/"
+        "TEST_PLACE_001/"
+        "test@example.com"
+    )
+
+    assert response.status_code == 404
+
+
+def test_main_recipient_email_requiere_secret(
+    monkeypatch,
+):
+    """
+    La nueva ruta POST para cambiar destinatario
+    debe exigir autenticación.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "secret-test",
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/setup/recipient-email",
+        json={
+            "place_id":
+                "TEST_PLACE_001",
+
+            "email":
+                "test@example.com",
+        },
+    )
+
+    assert response.status_code == 403
+
+
+def test_main_sequence_score_69_no_ejecuta_p5(
+    monkeypatch,
+):
+    """
+    /pipeline/sequence debe respetar el gate.
+
+    Score 69:
+    P5 no puede ejecutarse.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    async def fake_reviews(
+        *args,
+        **kwargs,
+    ):
+        return []
+
+    async def fake_guardar_reviews(
+        *args,
+        **kwargs,
+    ):
+        return 0
+
+    async def fake_p3(
+        *args,
+        **kwargs,
+    ):
+        return {
+            "website_title":
+                "Test"
+        }
+
+    async def fake_p4(
+        *args,
+        **kwargs,
+    ):
+        return {
+            "lead_score": 69,
+            "problema_principal":
+                "Problema test",
+        }
+
+    async def p5_prohibido(
+        *args,
+        **kwargs,
+    ):
+        raise AssertionError(
+            "P5 no debía ejecutarse para score 69."
+        )
+
+    monkeypatch.setattr(
+        main_module,
+        "obtener_reviews",
+        fake_reviews,
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "procesar_y_guardar_reviews",
+        fake_guardar_reviews,
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "analizar_y_guardar",
+        fake_p3,
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "generar_keypoints",
+        fake_p4,
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "generar_secuencia_emails",
+        p5_prohibido,
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/pipeline/sequence",
+        json={
+            "place_id":
+                "TEST_PLACE_001",
+
+            "url":
+                "https://example.com",
+
+            "max_reviews":
+                1,
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert (
+        data["p5"]["status"]
+        == "skipped"
+    )
+
+    assert (
+        data["p5"]["lead_score"]
+        == 69
+    )
+
+
+def test_main_daily_sequence_fail_closed_sin_secret(
+    monkeypatch,
+):
+    """
+    El cron tampoco puede quedar abierto
+    si TASK_SECRET desaparece.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "",
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/tasks/daily-sequence"
+    )
+
+    assert response.status_code == 503
