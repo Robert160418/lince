@@ -58,5 +58,5 @@ jobs:
       - name: Instalar herramientas de prueba
         run: pip install pytest pytest-asyncio
 
-      - name: Ejecutar solamente pruebas seguras de Lince 2.0
-        run: pytest tests/test_lince_v2_safe.py -v --tb=short
+      - name: Ejecutar pruebas seguras de Lince 2.0 y Auth Administrativa
+        run: pytest tests/test_lince_v2_safe.py tests/test_admin_auth.py -v --tb=short

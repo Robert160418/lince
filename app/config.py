@@ -25,7 +25,8 @@ if not GOOGLE_SHEETS_CREDENTIALS and GOOGLE_SHEETS_CREDENTIALS_PATH:
         GOOGLE_SHEETS_CREDENTIALS = None
 
 TASK_SECRET = os.getenv("TASK_SECRET", "")
-
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
+ADMIN_SESSION_SECRET = os.getenv("ADMIN_SESSION_SECRET", "")
 # Puente hacia portal.noboweb.com — sincroniza leads calificados (P4) al CRM
 # del portal. Si quedan vacíos, la sincronización simplemente se omite
 # (ver app/utils/portal_bridge.py) y Lince sigue funcionando normal.

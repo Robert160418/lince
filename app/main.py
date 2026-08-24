@@ -1,6 +1,9 @@
 import asyncio
+import hashlib
+import hmac
 import secrets
 import sys
+import time
 import urllib.parse
 from pathlib import Path
 from typing import Optional
@@ -17,6 +20,8 @@ from fastapi import (
     FastAPI,
     Header,
     HTTPException,
+    Request,
+    Response,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -24,6 +29,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.config import (
+    ADMIN_PASSWORD,
+    ADMIN_SESSION_SECRET,
     SUPABASE_HEADERS,
     SUPABASE_KEY,
     SUPABASE_URL,
@@ -159,6 +166,60 @@ def require_task_secret(
         )
 
 
+def verify_admin_session(cookie_val: str) -> bool:
+    if not cookie_val or not ADMIN_SESSION_SECRET:
+        return False
+    try:
+        timestamp_str, signature = cookie_val.split(".", 1)
+        timestamp = int(timestamp_str)
+
+        ahora = time.time()
+        age = ahora - timestamp
+
+        # 12 horas = 43200 segundos. Tolerancia de reloj = 60 seg en el futuro.
+        if age > 43200 or age < -60:
+            return False
+
+        expected_sig = hmac.new(
+            ADMIN_SESSION_SECRET.encode(),
+            timestamp_str.encode(),
+            hashlib.sha256
+        ).hexdigest()
+
+        return secrets.compare_digest(expected_sig, signature)
+    except Exception:
+        return False
+
+
+def verify_admin_or_task_secret(
+    request: Request,
+    x_task_secret: str = Header(default="", alias="X-Task-Secret"),
+):
+    """
+    Validación reutilizable para aceptar DOS mecanismos:
+    A) X-Task-Secret válido
+    B) cookie administrativa válida y no expirada
+    """
+    if not TASK_SECRET and not ADMIN_SESSION_SECRET:
+        raise HTTPException(
+            status_code=503,
+            detail="Ningún mecanismo de seguridad está configurado."
+        )
+
+    # 1. Validar X-Task-Secret si se envía
+    if TASK_SECRET and x_task_secret:
+        if secrets.compare_digest(x_task_secret, TASK_SECRET):
+            return True
+
+    # 2. Validar Cookie
+    cookie_val = request.cookies.get("lince_admin_session")
+    if cookie_val and verify_admin_session(cookie_val):
+        return True
+
+    raise HTTPException(status_code=403, detail="Acceso no autorizado")
+
+
+
 def validar_email_basico(
     email: str,
 ):
@@ -264,6 +325,8 @@ async def actualizar_recipient_email(
 # MODELOS
 # ===================================================================
 
+class LoginBody(BaseModel):
+    password: str
 
 class P1Body(BaseModel):
     query: str
@@ -320,6 +383,41 @@ class RecipientEmailBody(BaseModel):
 # ===================================================================
 # ENDPOINTS GENERALES
 # ===================================================================
+
+@app.post("/admin/login")
+async def admin_login(body: LoginBody, response: Response):
+    if not ADMIN_PASSWORD or not ADMIN_SESSION_SECRET:
+        raise HTTPException(
+            status_code=503,
+            detail="Autenticación administrativa no configurada."
+        )
+
+    if not secrets.compare_digest(body.password, ADMIN_PASSWORD):
+        raise HTTPException(
+            status_code=403,
+            detail="Contraseña incorrecta."
+        )
+
+    timestamp_str = str(int(time.time()))
+    signature = hmac.new(
+        ADMIN_SESSION_SECRET.encode(),
+        timestamp_str.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    session_val = f"{timestamp_str}.{signature}"
+
+    response.set_cookie(
+        key="lince_admin_session",
+        value=session_val,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        path="/",
+        max_age=43200,
+    )
+
+    return {"status": "ok", "message": "Sesión iniciada"}
 
 
 @app.get("/leads")
