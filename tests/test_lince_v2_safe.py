@@ -251,18 +251,83 @@ def test_p4_score_es_deterministico():
 
     # Con las reglas actuales:
     #
-    # sin web            +35
-    # sin Instagram      +10
-    # sin Facebook       +8
+    # sin web            +55
     # rating disponible  +2
     # rating < 4         +10
     # teléfono           +12
     # email              +8
     # dirección          +3
     #
-    # Total = 88
+    # Total = 90
 
-    assert score_1 == 88
+    assert score_1 == 90
+
+
+def test_p4_web_con_auditoria_fallida_no_inflama_score():
+    lead = {
+        "site": "https://example.com",
+        "data_website_ok": "error",
+        "website_title": "",
+        "website_description": "",
+        "website_has_gtm": False,
+        "website_has_fb_pixel": False,
+        "company_instagram": "",
+        "company_facebook": "",
+    }
+
+    score, breakdown = p4_keypoints.calcular_score_objetivo(lead)
+
+    assert score == 0
+    assert {
+        item["senal"] for item in breakdown
+    } == {"auditoria_web_no_concluyente"}
+    assert breakdown[0]["puntos"] == 0
+
+
+def test_p4_web_auditada_ok_suma_senales_ausentes():
+    lead = {
+        "site": "https://example.com",
+        "data_website_ok": "ok",
+        "website_title": "",
+        "website_description": "",
+        "website_has_gtm": False,
+        "website_has_fb_pixel": False,
+        "company_instagram": "",
+        "company_facebook": "",
+    }
+
+    score, breakdown = p4_keypoints.calcular_score_objetivo(lead)
+
+    assert score == 46
+    assert sum(item["puntos"] for item in breakdown) == 46
+
+
+def test_p4_sin_web_no_suma_redes_ausentes():
+    score, breakdown = p4_keypoints.calcular_score_objetivo({
+        "site": None,
+        "company_instagram": "",
+        "company_facebook": "",
+    })
+
+    assert score == 55
+    assert [item["senal"] for item in breakdown] == [
+        "sin_sitio_web"
+    ]
+
+
+def test_p4_score_siempre_entre_cero_y_cien():
+    score, _ = p4_keypoints.calcular_score_objetivo({
+        "site": "https://example.com",
+        "data_website_ok": "ok",
+        "rating": 1,
+        "phone": "999",
+        "contact_email": "test@example.com",
+        "full_address": "Quito",
+        "website_has_gtm": False,
+        "website_has_fb_pixel": False,
+    })
+
+    assert 0 <= score <= 100
 
 
 @pytest.mark.asyncio
@@ -395,7 +460,7 @@ async def test_p4_openai_no_puede_cambiar_score(
 
     assert (
         resultado["score_version"]
-        == "lince-v2-objective-1"
+        == "lince-v2-objective-2"
     )
 
     assert len(inserts) == 1

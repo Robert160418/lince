@@ -124,6 +124,12 @@ def calcular_score_objetivo(lead: dict) -> tuple[int, list]:
 
     site = lead.get("site")
 
+    website_audit_status = str(
+        lead.get("data_website_ok") or ""
+    ).strip().lower()
+
+    website_audit_ok = website_audit_status == "ok"
+
     website_title = lead.get("website_title")
     website_description = lead.get("website_description")
 
@@ -160,17 +166,17 @@ def calcular_score_objetivo(lead: dict) -> tuple[int, list]:
 
     if not _tiene_valor(site):
 
-        score += 35
+        score += 55
 
         razones.append({
             "senal": "sin_sitio_web",
-            "puntos": 35,
+            "puntos": 55,
             "detalle": (
                 "No se detectó sitio web."
             ),
         })
 
-    else:
+    elif website_audit_ok:
 
         if not _tiene_valor(website_title):
 
@@ -222,33 +228,45 @@ def calcular_score_objetivo(lead: dict) -> tuple[int, list]:
                 ),
             })
 
-    # ---------------------------------------------------------------
-    # 2. REDES SOCIALES
-    # ---------------------------------------------------------------
+        # -----------------------------------------------------------
+        # 2. REDES SOCIALES
+        # -----------------------------------------------------------
 
-    if not _tiene_valor(instagram):
+        if not _tiene_valor(instagram):
 
-        score += 10
+            score += 10
+
+            razones.append({
+                "senal": "instagram_no_detectado",
+                "puntos": 10,
+                "detalle": (
+                    "No se detectó Instagram "
+                    "desde el sitio web."
+                ),
+            })
+
+        if not _tiene_valor(facebook):
+
+            score += 8
+
+            razones.append({
+                "senal": "facebook_no_detectado",
+                "puntos": 8,
+                "detalle": (
+                    "No se detectó Facebook "
+                    "desde el sitio web."
+                ),
+            })
+
+    else:
 
         razones.append({
-            "senal": "instagram_no_detectado",
-            "puntos": 10,
+            "senal": "auditoria_web_no_concluyente",
+            "puntos": 0,
             "detalle": (
-                "No se detectó Instagram "
-                "desde el sitio web."
-            ),
-        })
-
-    if not _tiene_valor(facebook):
-
-        score += 8
-
-        razones.append({
-            "senal": "facebook_no_detectado",
-            "puntos": 8,
-            "detalle": (
-                "No se detectó Facebook "
-                "desde el sitio web."
+                "Existe sitio web, pero la auditoría no fue "
+                "concluyente; las señales web y sociales no "
+                "aumentan el score."
             ),
         })
 
@@ -834,7 +852,7 @@ Responde SOLO JSON válido con esta estructura exacta:
 
     resultado[
         "score_version"
-    ] = "lince-v2-objective-1"
+    ] = "lince-v2-objective-2"
 
     resultado[
         "reviews_reales_analizadas"
@@ -867,7 +885,7 @@ Responde SOLO JSON válido con esta estructura exacta:
                     servicio_principal,
 
                 "score_version":
-                    "lince-v2-objective-1",
+                    "lince-v2-objective-2",
 
                 "score_breakdown":
                     score_breakdown,
