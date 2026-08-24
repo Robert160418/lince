@@ -1,6 +1,9 @@
 import re
 import urllib.parse
 from datetime import datetime, timezone
+from typing import Optional
+import hashlib
+import json
 
 import requests
 
@@ -45,6 +48,18 @@ def _email_valido(value) -> bool:
             email,
         )
     )
+
+
+def _build_preview_fingerprint(place_id: str, dia: int, to_email: str, subject: str, body: str) -> str:
+    data = {
+        "place_id": str(place_id),
+        "dia": int(dia),
+        "to_email": str(to_email or ""),
+        "subject": str(subject or ""),
+        "body": str(body or ""),
+    }
+    raw = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
 def _normalizar_dia(value) -> int:
@@ -347,6 +362,8 @@ def _enviar_brevo(
 async def ejecutar_secuencia(
     place_id: str,
     approved_by_human: bool = False,
+    expected_day: Optional[int] = None,
+    expected_preview_fingerprint: Optional[str] = None,
 ) -> dict:
     """
     Procesa UN email de la secuencia.
@@ -546,6 +563,39 @@ async def ejecutar_secuencia(
             ),
         }
 
+    fingerprint_actual = _build_preview_fingerprint(
+        place_id, next_day, to_email, asunto, cuerpo
+    )
+
+    # ---------------------------------------------------------------
+    # VALIDAR EXPECTED DAY Y FINGERPRINT (RACE CONDITION)
+    # ---------------------------------------------------------------
+
+    if approved_by_human:
+        if expected_day is None:
+            return {
+                "status": "manual_review_required",
+                "mensaje": "Falta la referencia de la vista previa. Solicita una nueva preview antes de aprobar."
+            }
+
+        if expected_day != next_day:
+            return {
+                "status": "manual_review_required",
+                "mensaje": "La secuencia cambió desde la vista previa. Solicita una nueva preview antes de aprobar."
+            }
+
+        if expected_preview_fingerprint is None:
+            return {
+                "status": "manual_review_required",
+                "mensaje": "Falta la referencia exacta de la vista previa. Solicita una nueva preview antes de aprobar."
+            }
+
+        if expected_preview_fingerprint != fingerprint_actual:
+            return {
+                "status": "manual_review_required",
+                "mensaje": "El contenido o destinatario cambió desde la vista previa. Revisa nuevamente antes de enviar."
+            }
+
     # ---------------------------------------------------------------
     # APROBACIÓN HUMANA PARA CADA CONTACTO
     # ---------------------------------------------------------------
@@ -554,6 +604,7 @@ async def ejecutar_secuencia(
         return {
             "status": "pending_approval",
             "dia": next_day,
+            "preview_fingerprint": fingerprint_actual,
             "requiere_aprobacion": True,
             "preview": {
                 "subject": asunto,

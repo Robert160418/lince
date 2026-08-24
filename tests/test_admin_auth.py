@@ -157,10 +157,14 @@ def test_p5_dual_auth(mock_config, client, monkeypatch):
 
 def test_p6_dual_auth(mock_config, client, monkeypatch):
     received_approved = None
+    received_expected_day = None
+    received_fingerprint = None
 
-    async def mock_ejecutar(place_id, approved_by_human):
-        nonlocal received_approved
+    async def mock_ejecutar(place_id, approved_by_human, expected_day=None, expected_preview_fingerprint=None):
+        nonlocal received_approved, received_expected_day, received_fingerprint
         received_approved = approved_by_human
+        received_expected_day = expected_day
+        received_fingerprint = expected_preview_fingerprint
         return {"status": "ok"}
 
     async def mock_actualizar(place_id, to_email):
@@ -169,7 +173,7 @@ def test_p6_dual_auth(mock_config, client, monkeypatch):
     monkeypatch.setattr(main_module, "ejecutar_secuencia", mock_ejecutar)
     monkeypatch.setattr(main_module, "actualizar_recipient_email", mock_actualizar)
 
-    body = {"place_id": "test_p6", "approved_by_human": True, "to_email": "test@test.com"}
+    body = {"place_id": "test_p6", "approved_by_human": True, "to_email": "test@test.com", "expected_day": 1, "expected_preview_fingerprint": "abc"}
 
     res = client.post("/pipeline/p6", json=body)
     assert res.status_code == 403
@@ -177,6 +181,8 @@ def test_p6_dual_auth(mock_config, client, monkeypatch):
     res = client.post("/pipeline/p6", json=body, headers={"X-Task-Secret": "old_task_secret"})
     assert res.status_code == 200
     assert received_approved is True
+    assert received_expected_day == 1
+    assert received_fingerprint == "abc"
 
     received_approved = None
     body["approved_by_human"] = False

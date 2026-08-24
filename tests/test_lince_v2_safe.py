@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tests seguros de Lince 2.0
 ──────────────────────────
 
@@ -2067,4 +2067,160 @@ async def test_p6_sent_at_inconsistente_bloquea_antes_de_preview(
     )
 
     assert resultado["status"] == "manual_review_required"
-    assert "preview" not in resultado
+    assert "preview" not in resultado
+
+
+@pytest.mark.asyncio
+async def test_p6_expected_day_race_condition(monkeypatch):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 1,
+        "sent_at_day1": "2026-08-23T10:00:00+00:00",
+        "replied": False,
+        "sequence_stopped": False,
+        "email_2_subject": "Asunto 2",
+        "email_2_body": "Cuerpo 2",
+    }
+    async def fake_select(table, filters): return [row]
+    def fail_patch(*args, **kwargs): raise AssertionError("_patch_email_row NO debe llamarse.")
+    def fail_brevo(*args, **kwargs): raise AssertionError("Brevo NO debe ejecutarse.")
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+
+    fingerprint = p6_email_sender._build_preview_fingerprint("TEST_PLACE_001", 1, "contacto@example.com", "Asunto", "Cuerpo")
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"], approved_by_human=True, expected_day=1, expected_preview_fingerprint=fingerprint
+    )
+    assert resultado["status"] == "manual_review_required"
+    assert "secuencia cambió" in resultado["mensaje"]
+
+@pytest.mark.asyncio
+async def test_p6_aprobacion_sin_expected_day_falla(monkeypatch):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto 1",
+        "email_1_body": "Cuerpo 1",
+    }
+    async def fake_select(table, filters): return [row]
+    def fail_patch(*args, **kwargs): raise AssertionError("_patch_email_row NO debe llamarse.")
+    def fail_brevo(*args, **kwargs): raise AssertionError("Brevo NO debe ejecutarse.")
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"], approved_by_human=True, expected_day=None
+    )
+    assert resultado["status"] == "manual_review_required"
+    assert "Falta la referencia" in resultado["mensaje"]
+
+@pytest.mark.asyncio
+async def test_p6_aprobacion_sin_fingerprint_falla(monkeypatch):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto 1",
+        "email_1_body": "Cuerpo 1",
+    }
+    async def fake_select(table, filters): return [row]
+    def fail_patch(*args, **kwargs): raise AssertionError("_patch_email_row NO debe llamarse.")
+    def fail_brevo(*args, **kwargs): raise AssertionError("Brevo NO debe ejecutarse.")
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"], approved_by_human=True, expected_day=1, expected_preview_fingerprint=None
+    )
+    assert resultado["status"] == "manual_review_required"
+    assert "Falta la referencia exacta" in resultado["mensaje"]
+
+@pytest.mark.asyncio
+async def test_p6_aprobacion_con_contenido_modificado_falla(monkeypatch):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto B",
+        "email_1_body": "Cuerpo B",
+    }
+    async def fake_select(table, filters): return [row]
+    def fail_patch(*args, **kwargs): raise AssertionError("_patch_email_row NO debe llamarse.")
+    def fail_brevo(*args, **kwargs): raise AssertionError("Brevo NO debe ejecutarse.")
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+    old_fingerprint = p6_email_sender._build_preview_fingerprint(
+        place_id="TEST_PLACE_001", dia=1, to_email="contacto@example.com", subject="Asunto A", body="Cuerpo A"
+    )
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"], approved_by_human=True, expected_day=1, expected_preview_fingerprint=old_fingerprint
+    )
+    assert resultado["status"] == "manual_review_required"
+    assert "contenido o destinatario cambió" in resultado["mensaje"]
+
+@pytest.mark.asyncio
+async def test_p6_aprobacion_con_espacio_adicional_falla(monkeypatch):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto A",
+        "email_1_body": "Cuerpo A ",
+    }
+    async def fake_select(table, filters): return [row]
+    def fail_patch(*args, **kwargs): raise AssertionError("_patch_email_row NO debe llamarse.")
+    def fail_brevo(*args, **kwargs): raise AssertionError("Brevo NO debe ejecutarse.")
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+    old_fingerprint = p6_email_sender._build_preview_fingerprint(
+        place_id="TEST_PLACE_001", dia=1, to_email="contacto@example.com", subject="Asunto A", body="Cuerpo A"
+    )
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"], approved_by_human=True, expected_day=1, expected_preview_fingerprint=old_fingerprint
+    )
+    assert resultado["status"] == "manual_review_required"
+    assert "contenido o destinatario cambió" in resultado["mensaje"]
+
+# ===================================================================
+# UI HTML INTEGRATION TESTS
+# ===================================================================
+
+def test_html_ui_safe_patterns():
+    import os
+    from pathlib import Path
+
+    html_path = Path(__file__).parent.parent / "app" / "templates" / "index.html"
+    content = html_path.read_text(encoding="utf-8")
+
+    assert "TASK_SECRET" not in content
+    assert "ADMIN_PASSWORD" not in content
+    assert "ADMIN_SESSION_SECRET" not in content
+    assert "/admin/login" in content
+    assert "adminFetch(" in content
+    assert "escapeHtml(" in content
+    assert "POST" in content and "/setup/recipient-email" in content
+    assert "setup/recipient-email/${" not in content
+    assert "approved_by_human:false" in content
+    assert "approved_by_human:true" in content
+    assert "expected_day:" in content
+    assert "expected_preview_fingerprint:" in content
+    assert 'class="overlay show" id="loginOverlay"' in content or "class=\"overlay show\" id=\"loginOverlay\"" in content
+    assert "approveAndSendP6('${" not in content

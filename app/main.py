@@ -364,6 +364,9 @@ class P6Body(BaseModel):
     # por accidente.
     approved_by_human: bool = False
 
+    expected_day: Optional[int] = None
+    expected_preview_fingerprint: Optional[str] = None
+
 
 class SequenceBody(BaseModel):
     place_id: str
@@ -904,6 +907,8 @@ async def ejecutar_p6(
             approved_by_human=(
                 body.approved_by_human
             ),
+            expected_day=body.expected_day,
+            expected_preview_fingerprint=body.expected_preview_fingerprint,
         )
     )
 
