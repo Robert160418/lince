@@ -526,6 +526,7 @@ async def test_db():
     "/setup/recipient-email"
 )
 async def set_recipient_email(
+    request: Request,
     body: RecipientEmailBody,
     x_task_secret: str = Header(
         default="",
@@ -539,7 +540,8 @@ async def set_recipient_email(
     modificaba datos.
     """
 
-    require_task_secret(
+    verify_admin_or_task_secret(
+        request,
         x_task_secret
     )
 
@@ -803,6 +805,7 @@ async def ejecutar_p4(
 
 @app.post("/pipeline/p5")
 async def ejecutar_p5(
+    request: Request,
     body: P5Body,
     x_task_secret: str = Header(
         default="",
@@ -816,7 +819,8 @@ async def ejecutar_p5(
     de campañas desde Internet.
     """
 
-    require_task_secret(
+    verify_admin_or_task_secret(
+        request,
         x_task_secret
     )
 
@@ -862,6 +866,7 @@ async def ejecutar_p5(
 
 @app.post("/pipeline/p6")
 async def ejecutar_p6(
+    request: Request,
     body: P6Body,
 
     x_task_secret: str = Header(
@@ -874,14 +879,15 @@ async def ejecutar_p6(
 
     Requiere:
 
-    1. TASK_SECRET válido.
-    2. approved_by_human=True para el primer email.
+    1. Autenticación (TASK_SECRET o cookie de administrador).
+    2. approved_by_human=True para enviar cualquier email.
 
     El motor P6 mantiene además sus propias
     protecciones de idempotencia.
     """
 
-    require_task_secret(
+    verify_admin_or_task_secret(
+        request,
         x_task_secret
     )
 

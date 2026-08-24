@@ -14,7 +14,7 @@ async def test_protected(auth: bool = Depends(verify_admin_or_task_secret)):
 
 @pytest.fixture
 def client():
-    with TestClient(app) as c:
+    with TestClient(app, base_url="https://testserver") as c:
         yield c
 
 @pytest.fixture
@@ -124,3 +124,82 @@ def test_helper_fail_closed_if_missing_config(monkeypatch, client):
 
     res = client.get("/test-protected-auth")
     assert res.status_code == 503
+
+def test_p5_dual_auth(mock_config, client, monkeypatch):
+    calls = []
+
+    async def mock_generar(place_id):
+        calls.append(place_id)
+        return {
+            "emails": [],
+            "requiere_aprobacion": True
+        }
+    monkeypatch.setattr(main_module, "generar_secuencia_emails", mock_generar)
+
+    body = {"place_id": "test_p5"}
+
+    res = client.post("/pipeline/p5", json=body)
+    assert res.status_code == 403
+    assert len(calls) == 0
+
+    res = client.post("/pipeline/p5", json=body, headers={"X-Task-Secret": "old_task_secret"})
+    assert res.status_code == 200
+    assert len(calls) == 1
+    assert calls[0] == "test_p5"
+
+    login_res = client.post("/admin/login", json={"password": "super_secret"})
+    assert login_res.status_code == 200
+
+    res = client.post("/pipeline/p5", json=body)
+    assert res.status_code == 200
+    assert len(calls) == 2
+    assert calls[1] == "test_p5"
+
+def test_p6_dual_auth(mock_config, client, monkeypatch):
+    received_approved = None
+
+    async def mock_ejecutar(place_id, approved_by_human):
+        nonlocal received_approved
+        received_approved = approved_by_human
+        return {"status": "ok"}
+
+    async def mock_actualizar(place_id, to_email):
+        return {"status": "ok"}
+
+    monkeypatch.setattr(main_module, "ejecutar_secuencia", mock_ejecutar)
+    monkeypatch.setattr(main_module, "actualizar_recipient_email", mock_actualizar)
+
+    body = {"place_id": "test_p6", "approved_by_human": True, "to_email": "test@test.com"}
+
+    res = client.post("/pipeline/p6", json=body)
+    assert res.status_code == 403
+
+    res = client.post("/pipeline/p6", json=body, headers={"X-Task-Secret": "old_task_secret"})
+    assert res.status_code == 200
+    assert received_approved is True
+
+    received_approved = None
+    body["approved_by_human"] = False
+
+    client.post("/admin/login", json={"password": "super_secret"})
+    res = client.post("/pipeline/p6", json=body)
+    assert res.status_code == 200
+    assert received_approved is False
+
+def test_setup_recipient_email_dual_auth(mock_config, client, monkeypatch):
+    async def mock_actualizar(place_id, email):
+        return {"status": "ok"}
+
+    monkeypatch.setattr(main_module, "actualizar_recipient_email", mock_actualizar)
+
+    body = {"place_id": "test_p6", "email": "test@test.com"}
+
+    res = client.post("/setup/recipient-email", json=body)
+    assert res.status_code == 403
+
+    res = client.post("/setup/recipient-email", json=body, headers={"X-Task-Secret": "old_task_secret"})
+    assert res.status_code == 200
+
+    client.post("/admin/login", json={"password": "super_secret"})
+    res = client.post("/setup/recipient-email", json=body)
+    assert res.status_code == 200
