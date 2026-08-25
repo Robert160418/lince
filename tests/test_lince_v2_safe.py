@@ -1671,13 +1671,14 @@ def test_main_p6_pasa_aprobacion_humana_al_motor(
     async def fake_p6(
         place_id,
         approved_by_human=False,
+        expected_day=None,
+        expected_preview_fingerprint=None,
     ):
         llamadas.append({
-            "place_id":
-                place_id,
-
-            "approved_by_human":
-                approved_by_human,
+            "place_id": place_id,
+            "approved_by_human": approved_by_human,
+            "expected_day": expected_day,
+            "expected_preview_fingerprint": expected_preview_fingerprint,
         })
 
         return {
@@ -1724,6 +1725,8 @@ def test_main_p6_pasa_aprobacion_humana_al_motor(
         llamadas[0]["approved_by_human"]
         is False
     )
+    assert llamadas[0]["expected_day"] is None
+    assert llamadas[0]["expected_preview_fingerprint"] is None
 
 
 def test_main_antiguo_get_recipient_email_ya_no_existe():
@@ -1984,9 +1987,19 @@ async def test_p6_email_invalido_bloquea_aprobacion(
     monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
     monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
 
+    fingerprint = p6_email_sender._build_preview_fingerprint(
+        row["place_id"],
+        1,
+        row["recipient_email"],
+        row["email_1_subject"],
+        row["email_1_body"],
+    )
+
     resultado = await p6_email_sender.ejecutar_secuencia(
         row["place_id"],
-        approved_by_human=True
+        approved_by_human=True,
+        expected_day=1,
+        expected_preview_fingerprint=fingerprint,
     )
 
     assert "error" in resultado
