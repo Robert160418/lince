@@ -239,6 +239,15 @@ def _validar_secuencia(
             cuerpo
         ).strip()
 
+        firma = "Roberto\nNoboweb\nnoboweb.com"
+
+        if not re.search(
+            r"roberto\s+noboweb\s+noboweb\.com\s*$",
+            cuerpo,
+            re.IGNORECASE,
+        ):
+            cuerpo = f"{cuerpo.rstrip()}\n\n{firma}"
+
         if not asunto:
 
             return [], (

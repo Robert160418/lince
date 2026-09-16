@@ -1589,6 +1589,12 @@ def test_main_p6_bloqueado_si_task_secret_no_existe(
 
     monkeypatch.setattr(
         main_module,
+        "ADMIN_SESSION_SECRET",
+        "",
+    )
+
+    monkeypatch.setattr(
+        main_module,
         "ejecutar_secuencia",
         p6_prohibido,
     )

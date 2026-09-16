@@ -862,7 +862,7 @@ Responde SOLO JSON válido con esta estructura exacta:
     # GUARDAR KEYPOINTS
     # ---------------------------------------------------------------
 
-    await supabase_insert(
+    insert_result = await supabase_insert(
         "keypoints",
         {
             "place_id": place_id,
@@ -929,11 +929,39 @@ Responde SOLO JSON válido con esta estructura exacta:
         },
     )
 
+    insert_status = (
+        insert_result.get("status")
+        if isinstance(insert_result, dict)
+        else None
+    )
+
+    if insert_status not in (200, 201, 204):
+        detalle = (
+            insert_result.get("error")
+            if isinstance(insert_result, dict)
+            else ""
+        )
+
+        print(
+            "P4 ERROR: keypoints no fueron guardados "
+            f"en Supabase. status={insert_status} "
+            f"detalle={detalle}"
+        )
+
+        return {
+            "error": (
+                "P4 no pudo guardar los keypoints en Supabase. "
+                "El lead NO fue marcado como completado."
+            ),
+            "place_id": place_id,
+            "lead_score": lead_score,
+        }
+
     # ---------------------------------------------------------------
     # ACTUALIZAR LEAD
     # ---------------------------------------------------------------
 
-    await supabase_update_lead(
+    update_result = await supabase_update_lead(
         place_id,
         {
             "lead_score":
@@ -946,6 +974,28 @@ Responde SOLO JSON válido con esta estructura exacta:
                 "ok",
         },
     )
+
+    update_status = (
+        update_result.get("status")
+        if isinstance(update_result, dict)
+        else None
+    )
+
+    if update_status not in (200, 201, 204):
+        print(
+            "P4 ERROR: keypoints sí se guardaron, "
+            f"pero el lead no pudo actualizarse. "
+            f"status={update_status}"
+        )
+
+        return {
+            "error": (
+                "Los keypoints fueron guardados, pero P4 no pudo "
+                "marcar el lead como completado."
+            ),
+            "place_id": place_id,
+            "lead_score": lead_score,
+        }
 
     resultado["place_id"] = place_id
 

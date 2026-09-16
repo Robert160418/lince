@@ -4,6 +4,8 @@ Uso: pytest tests/ -v
 """
 
 import pytest
+
+pytestmark = pytest.mark.integration
 import asyncio
 import httpx
 from pathlib import Path

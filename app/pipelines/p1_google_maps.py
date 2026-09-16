@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import re
 import urllib.parse as _ul
 from datetime import datetime
@@ -79,7 +80,37 @@ def _extract_place_id(href: str, detail_page) -> str:
     if m:
         return m.group(1)
 
-    # 3) Fallback: slug URL decodificado (p.ej. "Restaurante+El+Sol" → "Restaurante El Sol")
+    # 3) Ficha directa de Google Maps:
+    #    reconstruir Place ID ChIJ desde
+    #    !1s0xHEX1:0xHEX2
+    m = re.search(
+        r'!1s(0x[0-9a-fA-F]+):(0x[0-9a-fA-F]+)',
+        combined,
+    )
+
+    if m:
+        try:
+            h1 = int(m.group(1), 16)
+            h2 = int(m.group(2), 16)
+
+            raw = (
+                b"\x0a\x12\x09"
+                + h1.to_bytes(8, "little")
+                + b"\x11"
+                + h2.to_bytes(8, "little")
+            )
+
+            return (
+                base64.urlsafe_b64encode(raw)
+                .decode()
+                .rstrip("=")
+            )
+
+        except Exception:
+            pass
+
+    # 4) Fallback: slug URL decodificado
+    #    (p.ej. "Restaurante+El+Sol" → "Restaurante El Sol")
     if "/place/" in href:
         raw = href.split("/place/")[-1].split("/")[0]
         return _ul.unquote_plus(raw)
@@ -96,11 +127,117 @@ def _scrape_sync(query: str, limit: int) -> list:
         page.wait_for_timeout(3000)
 
         panel = page.locator('div[role="feed"]')
-        for _ in range(5):
-            panel.evaluate("el => el.scrollBy(0, 1000)")
-            page.wait_for_timeout(1500)
 
-        listings = page.query_selector_all('a[href*="/maps/place/"]')
+        # Google Maps puede responder de dos formas:
+        # 1) lista de resultados con div[role="feed"]
+        # 2) ficha directa de un negocio en búsquedas exactas
+        if panel.count() > 0:
+            for _ in range(5):
+                try:
+                    panel.evaluate("el => el.scrollBy(0, 1000)")
+                    page.wait_for_timeout(1500)
+                except Exception:
+                    break
+
+            listings = page.query_selector_all(
+                'a[href*="/maps/place/"]'
+            )
+
+        else:
+            # Búsqueda exacta: Google abrió directamente
+            # la ficha del negocio, sin panel de resultados.
+            direct_place = (
+                "/maps/place/" in page.url
+                or page.query_selector("h1.DUwDvf") is not None
+                or page.query_selector("h1.fontHeadlineLarge") is not None
+            )
+
+            if direct_place:
+                try:
+                    # La ficha puede aparecer antes de que Google
+                    # termine de cambiar /maps/search/ por /maps/place/.
+                    # Esperamos la URL final para poder reconstruir ChIJ.
+                    try:
+                        page.wait_for_url(
+                            "**/maps/place/**",
+                            timeout=7000,
+                        )
+                    except Exception:
+                        page.wait_for_timeout(2500)
+
+                    name_el = (
+                        page.query_selector("h1.DUwDvf")
+                        or page.query_selector("h1.fontHeadlineLarge")
+                    )
+
+                    nombre = (
+                        name_el.inner_text().strip()
+                        if name_el
+                        else page.title().split(" - Google Maps")[0].strip()
+                    )
+
+                    href = page.url
+                    rating = _extract_rating(page)
+
+                    phone_el = page.query_selector(
+                        'button[data-item-id*="phone"]'
+                    )
+                    phone = (
+                        phone_el.get_attribute("data-item-id")
+                        if phone_el
+                        else None
+                    )
+                    if phone:
+                        phone = phone.replace(
+                            "phone:tel:",
+                            "",
+                        )
+
+                    website_el = page.query_selector(
+                        'a[data-item-id="authority"]'
+                    )
+                    website = (
+                        website_el.get_attribute("href")
+                        if website_el
+                        else None
+                    )
+
+                    address_el = page.query_selector(
+                        'button[data-item-id="address"]'
+                    )
+                    address = (
+                        address_el.inner_text().strip()
+                        if address_el
+                        else None
+                    )
+
+                    place_id = _extract_place_id(
+                        href,
+                        page,
+                    )
+
+                    resultados.append({
+                        "place_id": place_id,
+                        "name": nombre,
+                        "rating": rating,
+                        "phone": phone,
+                        "site": website,
+                        "full_address": address,
+                        "query": query,
+                    })
+
+                except Exception as e:
+                    print(
+                        f"Error scraping ficha directa: {e}"
+                    )
+
+                browser.close()
+                return resultados[:limit]
+
+            listings = page.query_selector_all(
+                'a[href*="/maps/place/"]'
+            )
+
         seen = set()
 
         for listing in listings[:limit]:
@@ -163,30 +300,96 @@ async def procesar_y_guardar_leads(resultados: list, query: str = "") -> dict:
     """
     lote_id = _make_lote_id(query)
 
-    # Crear pestaña en Google Sheets para este lote
-    if _SHEETS_AVAILABLE:
-        try:
-            await create_lote_sheet(lote_id)
-        except Exception as e:
-            print(f"Google Sheets create_lote_sheet error: {e}")
-
+    # La pestaña se crea únicamente cuando exista
+    # al menos UN lead nuevo guardado correctamente.
+    sheet_creado = False
     guardados = 0
-    for negocio in resultados:
-        if negocio.get("name"):
-            try:
-                lead_data = {**negocio, "lote_id": lote_id}
-                resp = await supabase_insert("leads", lead_data)
-                if resp.get("status") in (200, 201):
-                    guardados += 1
-                    # Agregar fila al Sheet
-                    if _SHEETS_AVAILABLE:
-                        try:
-                            await add_lead_to_sheet(lote_id, negocio)
-                        except Exception as e:
-                            print(f"Google Sheets add_lead error: {e}")
-                else:
-                    print(f"Error HTTP {resp.get('status')} guardando {negocio.get('name')}")
-            except Exception as e:
-                print(f"Error guardando {negocio.get('name')}: {e}")
+    duplicados = 0
+    errores = 0
 
-    return {"guardados": guardados, "lote_id": lote_id}
+    for negocio in resultados:
+        if not negocio.get("name"):
+            continue
+
+        try:
+            lead_data = {
+                **negocio,
+                "lote_id": lote_id,
+            }
+
+            resp = await supabase_insert(
+                "leads",
+                lead_data,
+            )
+
+            status = (
+                resp.get("status")
+                if isinstance(resp, dict)
+                else None
+            )
+
+            if status in (200, 201):
+
+                guardados += 1
+
+                if _SHEETS_AVAILABLE:
+                    try:
+                        if not sheet_creado:
+                            await create_lote_sheet(
+                                lote_id
+                            )
+                            sheet_creado = True
+
+                        await add_lead_to_sheet(
+                            lote_id,
+                            lead_data,
+                        )
+
+                    except Exception as e:
+                        print(
+                            "Google Sheets error "
+                            f"para {negocio.get('name')}: {e}"
+                        )
+
+            elif status == 409:
+
+                duplicados += 1
+
+                print(
+                    "Lead duplicado omitido: "
+                    f"{negocio.get('name')} "
+                    f"({negocio.get('place_id')})"
+                )
+
+            else:
+
+                errores += 1
+
+                print(
+                    f"Error HTTP {status} guardando "
+                    f"{negocio.get('name')}"
+                )
+
+        except Exception as e:
+
+            errores += 1
+
+            print(
+                f"Error guardando "
+                f"{negocio.get('name')}: {e}"
+            )
+
+    # Si no hubo ningún lead nuevo, no existe lote
+    # operativo y no debe arrancar P2→P5.
+    lote_operativo = (
+        lote_id
+        if guardados > 0
+        else ""
+    )
+
+    return {
+        "guardados": guardados,
+        "duplicados": duplicados,
+        "errores": errores,
+        "lote_id": lote_operativo,
+    }

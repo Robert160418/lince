@@ -1,5 +1,6 @@
 import json
 import asyncio
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -102,39 +103,433 @@ def _score_to_color_key(score) -> str:
 
 
 def _apply_row_color_sync(ws, row_num: int, score):
-    """Pinta la fila entera con el color de temperatura del lead."""
+    """
+    Resalta Score, Temperatura y Estado usando
+    una sola petición a Google Sheets.
+    """
     color_key = _score_to_color_key(score)
     bg = _COLORS[color_key]
-    ws.format(f"A{row_num}:{_last_col()}{row_num}", {
-        "backgroundColor": bg
-    })
-    # Lead Score en negrita + color de texto según temperatura
-    score_col = _col_letter(COL["Lead Score"])
+
     text_color = (
-        {"red": 0.75, "green": 0.1, "blue": 0.1}   if color_key == "caliente"
-        else {"red": 0.6, "green": 0.45, "blue": 0.0} if color_key == "tibio"
-        else {"red": 0.1, "green": 0.3, "blue": 0.7}
+        {"red": 0.70, "green": 0.08, "blue": 0.08}
+        if color_key == "caliente"
+        else {"red": 0.55, "green": 0.38, "blue": 0.0}
+        if color_key == "tibio"
+        else {"red": 0.08, "green": 0.25, "blue": 0.62}
     )
-    ws.format(f"{score_col}{row_num}", {
-        "textFormat": {"bold": True, "foregroundColor": text_color}
-    })
+
+    formatos = []
+
+    for col_name in (
+        "Lead Score",
+        "Temperatura",
+        "Estado",
+    ):
+        col = _col_letter(COL[col_name])
+
+        formatos.append({
+            "range": f"{col}{row_num}",
+            "format": {
+                "backgroundColor": bg,
+                "textFormat": {
+                    "bold": True,
+                    "foregroundColor": text_color,
+                },
+            },
+        })
+
+    ws.batch_format(formatos)
 
 
 def _format_header_sync(ws):
-    """Da estilo a la fila de cabecera."""
-    ws.format(f"A1:{_last_col()}1", {
-        "backgroundColor": _HEADER_BG,
-        "textFormat": {
-            "bold": True,
-            "foregroundColor": _HEADER_FG,
+    """
+    Diseño profesional optimizado para consumir pocas
+    solicitudes de Google Sheets.
+    """
+
+    last_col = _last_col()
+
+    formatos = [
+        {
+            "range": f"A2:{last_col}500",
+            "format": {
+                "backgroundColor": {
+                    "red": 1.0,
+                    "green": 1.0,
+                    "blue": 1.0,
+                },
+                "verticalAlignment": "TOP",
+                "wrapStrategy": "WRAP",
+                "textFormat": {
+                    "fontSize": 10,
+                },
+            },
         },
-        "horizontalAlignment": "CENTER",
-    })
-    # Fijar la primera fila (freeze)
+        {
+            "range": "A1:F1",
+            "format": {
+                "backgroundColor": {
+                    "red": 0.12,
+                    "green": 0.16,
+                    "blue": 0.23,
+                },
+                "textFormat": {
+                    "bold": True,
+                    "foregroundColor": {
+                        "red": 1,
+                        "green": 1,
+                        "blue": 1,
+                    },
+                },
+                "horizontalAlignment": "CENTER",
+                "verticalAlignment": "MIDDLE",
+                "wrapStrategy": "WRAP",
+            },
+        },
+        {
+            "range": "G1:H1",
+            "format": {
+                "backgroundColor": {
+                    "red": 0.15,
+                    "green": 0.39,
+                    "blue": 0.92,
+                },
+                "textFormat": {
+                    "bold": True,
+                    "foregroundColor": {
+                        "red": 1,
+                        "green": 1,
+                        "blue": 1,
+                    },
+                },
+                "horizontalAlignment": "CENTER",
+                "verticalAlignment": "MIDDLE",
+                "wrapStrategy": "WRAP",
+            },
+        },
+        {
+            "range": "I1:N1",
+            "format": {
+                "backgroundColor": {
+                    "red": 0.49,
+                    "green": 0.23,
+                    "blue": 0.93,
+                },
+                "textFormat": {
+                    "bold": True,
+                    "foregroundColor": {
+                        "red": 1,
+                        "green": 1,
+                        "blue": 1,
+                    },
+                },
+                "horizontalAlignment": "CENTER",
+                "verticalAlignment": "MIDDLE",
+                "wrapStrategy": "WRAP",
+            },
+        },
+        {
+            "range": "O1:U1",
+            "format": {
+                "backgroundColor": {
+                    "red": 0.06,
+                    "green": 0.46,
+                    "blue": 0.42,
+                },
+                "textFormat": {
+                    "bold": True,
+                    "foregroundColor": {
+                        "red": 1,
+                        "green": 1,
+                        "blue": 1,
+                    },
+                },
+                "horizontalAlignment": "CENTER",
+                "verticalAlignment": "MIDDLE",
+                "wrapStrategy": "WRAP",
+            },
+        },
+        {
+            "range": "V1",
+            "format": {
+                "backgroundColor": {
+                    "red": 0.08,
+                    "green": 0.10,
+                    "blue": 0.15,
+                },
+                "textFormat": {
+                    "bold": True,
+                    "foregroundColor": {
+                        "red": 1,
+                        "green": 1,
+                        "blue": 1,
+                    },
+                },
+                "horizontalAlignment": "CENTER",
+                "verticalAlignment": "MIDDLE",
+                "wrapStrategy": "WRAP",
+            },
+        },
+        {
+            "range": "B2:B500",
+            "format": {
+                "textFormat": {
+                    "bold": True,
+                },
+            },
+        },
+        {
+            "range": "C2:D500",
+            "format": {
+                "horizontalAlignment": "CENTER",
+            },
+        },
+        {
+            "range": "G2:J500",
+            "format": {
+                "horizontalAlignment": "CENTER",
+            },
+        },
+        {
+            "range": "P2:P500",
+            "format": {
+                "horizontalAlignment": "CENTER",
+            },
+        },
+        {
+            "range": "T2:U500",
+            "format": {
+                "horizontalAlignment": "CENTER",
+            },
+        },
+    ]
+
+    # Añadir colores existentes SIN hacer una petición por celda.
     try:
-        ws.freeze(rows=1)
-    except Exception:
-        pass
+        values = ws.get_all_values()
+
+        for row_num, row in enumerate(
+            values[1:],
+            start=2,
+        ):
+            negocio = (
+                row[COL["Negocio"] - 1]
+                if len(row) >= COL["Negocio"]
+                else ""
+            )
+
+            if str(negocio).startswith("📊 RESUMEN"):
+                formatos.append({
+                    "range":
+                        f"A{row_num}:{last_col}{row_num}",
+                    "format": {
+                        "backgroundColor": {
+                            "red": 0.22,
+                            "green": 0.22,
+                            "blue": 0.28,
+                        },
+                        "textFormat": {
+                            "bold": True,
+                            "foregroundColor": {
+                                "red": 1,
+                                "green": 1,
+                                "blue": 1,
+                            },
+                        },
+                    },
+                })
+                continue
+
+            score = (
+                row[COL["Lead Score"] - 1]
+                if len(row) >= COL["Lead Score"]
+                else ""
+            )
+
+            if not str(score).strip():
+                continue
+
+            color_key = _score_to_color_key(score)
+            bg = _COLORS[color_key]
+
+            text_color = (
+                {"red": 0.70, "green": 0.08, "blue": 0.08}
+                if color_key == "caliente"
+                else {"red": 0.55, "green": 0.38, "blue": 0.0}
+                if color_key == "tibio"
+                else {"red": 0.08, "green": 0.25, "blue": 0.62}
+            )
+
+            for col_name in (
+                "Lead Score",
+                "Temperatura",
+                "Estado",
+            ):
+                col = _col_letter(COL[col_name])
+
+                formatos.append({
+                    "range": f"{col}{row_num}",
+                    "format": {
+                        "backgroundColor": bg,
+                        "textFormat": {
+                            "bold": True,
+                            "foregroundColor": text_color,
+                        },
+                    },
+                })
+
+    except Exception as exc:
+        print(
+            f"[Sheets] warning leyendo filas: {exc}"
+        )
+
+    # UNA escritura para todos los formatos de la pestaña.
+    ws.batch_format(formatos)
+
+    widths = [
+        100, 260, 85, 140, 230, 285,
+        135, 120, 90, 120, 300, 320,
+        230, 330, 220, 140, 255, 255,
+        255, 155, 185, 230,
+    ]
+
+    requests = [
+        {
+            "updateSheetProperties": {
+                "properties": {
+                    "sheetId": ws.id,
+                    "gridProperties": {
+                        "frozenRowCount": 1,
+                        "frozenColumnCount": 2,
+                    },
+                },
+                "fields": (
+                    "gridProperties.frozenRowCount,"
+                    "gridProperties.frozenColumnCount"
+                ),
+            }
+        },
+        {
+            "updateDimensionProperties": {
+                "range": {
+                    "sheetId": ws.id,
+                    "dimension": "ROWS",
+                    "startIndex": 0,
+                    "endIndex": 1,
+                },
+                "properties": {
+                    "pixelSize": 46,
+                },
+                "fields": "pixelSize",
+            }
+        },
+        {
+            "updateDimensionProperties": {
+                "range": {
+                    "sheetId": ws.id,
+                    "dimension": "COLUMNS",
+                    "startIndex": 0,
+                    "endIndex": 1,
+                },
+                "properties": {
+                    "hiddenByUser": True,
+                },
+                "fields": "hiddenByUser",
+            }
+        },
+        {
+            "clearBasicFilter": {
+                "sheetId": ws.id,
+            }
+        },
+        {
+            "setBasicFilter": {
+                "filter": {
+                    "range": {
+                        "sheetId": ws.id,
+                        "startRowIndex": 0,
+                        "startColumnIndex": 0,
+                        "endRowIndex": ws.row_count,
+                        "endColumnIndex": len(LOTE_HEADERS),
+                    }
+                }
+            }
+        },
+    ]
+
+    for idx, width in enumerate(widths):
+        requests.append({
+            "updateDimensionProperties": {
+                "range": {
+                    "sheetId": ws.id,
+                    "dimension": "COLUMNS",
+                    "startIndex": idx,
+                    "endIndex": idx + 1,
+                },
+                "properties": {
+                    "pixelSize": width,
+                },
+                "fields": "pixelSize",
+            }
+        })
+
+    # UNA segunda escritura para estructura, filtros y tamaños.
+    ws.spreadsheet.batch_update(
+        {"requests": requests}
+    )
+
+
+
+def _format_all_lote_sheets_sync():
+    """
+    Aplica el nuevo diseño a todas las pestañas que
+    tengan la estructura estándar de Lince.
+    """
+    client = _get_client()
+
+    if not client:
+        return {
+            "status": "error",
+            "detail": "Google Sheets no disponible",
+        }
+
+    spreadsheet = client.open_by_key(
+        GOOGLE_SHEET_ID
+    )
+
+    formateadas = []
+    omitidas = []
+
+    for ws in spreadsheet.worksheets():
+
+        headers = ws.row_values(1)
+
+        if not headers:
+            omitidas.append(ws.title)
+            continue
+
+        if (
+            "place_id" not in headers
+            or "Negocio" not in headers
+            or "Lead Score" not in headers
+            or "Estado" not in headers
+        ):
+            omitidas.append(ws.title)
+            continue
+
+        _format_header_sync(ws)
+        formateadas.append(ws.title)
+
+        # Máximo aproximado: 40 escrituras/minuto.
+        # Google permite más, pero dejamos margen.
+        time.sleep(3)
+
+    return {
+        "status": "ok",
+        "formateadas": formateadas,
+        "omitidas": omitidas,
+    }
+
 
 
 # ── Helpers síncronos ─────────────────────────────────────────────────────────
@@ -299,6 +694,11 @@ async def write_summary_row(lote_id: str, stats: dict):
 
 async def get_sheet_url():
     return await asyncio.to_thread(_get_sheet_url_sync)
+
+async def format_all_lote_sheets():
+    return await asyncio.to_thread(
+        _format_all_lote_sheets_sync
+    )
 
 # Compatibilidad legacy
 async def append_row(sheet_name: str, row: list):

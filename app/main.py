@@ -321,6 +321,51 @@ async def actualizar_recipient_email(
     }
 
 
+async def _sync_sheet_for_place(
+    place_id: str,
+    updates: dict,
+):
+    """
+    Sincroniza cambios manuales de Lince con la pestaña
+    correspondiente del Google Sheet.
+
+    Un fallo de Sheets nunca debe romper el pipeline principal.
+    """
+    if not updates:
+        return False
+
+    try:
+        leads = await supabase_select(
+            "leads",
+            {"place_id": f"eq.{place_id}"},
+        )
+
+        if not leads:
+            return False
+
+        lote_id = leads[0].get("lote_id")
+
+        if not lote_id:
+            return False
+
+        from app.utils.google_sheets import update_lead_in_sheet
+
+        return bool(
+            await update_lead_in_sheet(
+                lote_id,
+                place_id,
+                updates,
+            )
+        )
+
+    except Exception as exc:
+        print(
+            f"[Sheets] warning sincronizando "
+            f"{place_id}: {exc}"
+        )
+        return False
+
+
 # ===================================================================
 # MODELOS
 # ===================================================================
@@ -548,10 +593,20 @@ async def set_recipient_email(
         x_task_secret
     )
 
-    return await actualizar_recipient_email(
+    resultado = await actualizar_recipient_email(
         body.place_id,
         body.email,
     )
+
+    await _sync_sheet_for_place(
+        body.place_id,
+        {
+            "Email Destino":
+                resultado.get("recipient_email", ""),
+        },
+    )
+
+    return resultado
 
 
 # ===================================================================
@@ -660,12 +715,6 @@ async def ejecutar_p1(
         else ""
     )
 
-    if lote_id:
-        background_tasks.add_task(
-            process_lote,
-            lote_id,
-        )
-
     guardados = (
         resultado.get(
             "guardados",
@@ -678,21 +727,67 @@ async def ejecutar_p1(
         else resultado
     )
 
+    duplicados = (
+        resultado.get(
+            "duplicados",
+            0,
+        )
+        if isinstance(
+            resultado,
+            dict,
+        )
+        else 0
+    )
+
+    errores = (
+        resultado.get(
+            "errores",
+            0,
+        )
+        if isinstance(
+            resultado,
+            dict,
+        )
+        else 0
+    )
+
+    if lote_id and guardados > 0:
+        background_tasks.add_task(
+            process_lote,
+            lote_id,
+        )
+
+        message = (
+            f"{guardados} lead(s) nuevo(s) guardado(s). "
+            f"{duplicados} duplicado(s) omitido(s). "
+            "Pipeline seguro P2-P5 corriendo "
+            "en segundo plano. "
+            "P6 requiere aprobación."
+        )
+
+    else:
+        message = (
+            "No se encontraron leads nuevos para procesar. "
+            f"{duplicados} duplicado(s) omitido(s). "
+            "No se creó lote ni se ejecutó P2-P5."
+        )
+
     return {
         "status": "ok",
 
-        "message": (
-            f"Lote '{lote_id}' creado. "
-            "Pipeline seguro P2-P5 "
-            "corriendo en segundo plano. "
-            "P6 requiere aprobación."
-        ),
+        "message": message,
 
         "encontrados":
             len(resultados),
 
         "guardados":
             guardados,
+
+        "duplicados":
+            duplicados,
+
+        "errores":
+            errores,
 
         "lote_id":
             lote_id,
@@ -733,6 +828,17 @@ async def ejecutar_p2(
         )
     )
 
+    await _sync_sheet_for_place(
+        body.place_id,
+        {
+            "P2 Reviews": (
+                f"✅ {len(reviews)} reviews"
+                if reviews
+                else "— Sin reviews disponibles"
+            ),
+        },
+    )
+
     return {
         "status": "ok",
 
@@ -767,6 +873,13 @@ async def ejecutar_p3(
         body.place_id
     )
 
+    await _sync_sheet_for_place(
+        body.place_id,
+        {
+            "P3 Web": "✅ Analizado",
+        },
+    )
+
     return {
         "status": "ok",
         "resultado": datos,
@@ -794,6 +907,48 @@ async def ejecutar_p4(
             "error":
                 resultado["error"],
         }
+
+    try:
+        score = int(
+            float(
+                resultado.get("lead_score")
+                or 0
+            )
+        )
+    except (TypeError, ValueError):
+        score = 0
+
+    if score >= 70:
+        temperatura = "🔥 Caliente"
+        estado = "🎯 Candidato comercial"
+    elif score >= 40:
+        temperatura = "🟡 Tibio"
+        estado = "📦 Analizado"
+    else:
+        temperatura = "❄️ Frío"
+        estado = "📦 Analizado — no califica"
+
+    servicios = resultado.get(
+        "servicios_recomendados",
+        [],
+    ) or []
+
+    await _sync_sheet_for_place(
+        body.place_id,
+        {
+            "Lead Score": score,
+            "Temperatura": temperatura,
+            "Problema Principal":
+                resultado.get("problema_principal", ""),
+            "Oportunidad":
+                resultado.get("oportunidad", ""),
+            "Servicio Principal":
+                resultado.get("servicio_principal", ""),
+            "Servicios Recomendados":
+                ", ".join(str(x) for x in servicios if x),
+            "Estado": estado,
+        },
+    )
 
     return {
         "status": "ok",
@@ -843,6 +998,35 @@ async def ejecutar_p5(
     emails = resultado.get(
         "emails",
         [],
+    )
+
+    def _asunto_email(index):
+        if index >= len(emails):
+            return ""
+
+        email = emails[index]
+
+        if not isinstance(email, dict):
+            return ""
+
+        return (
+            email.get("asunto")
+            or email.get("subject")
+            or ""
+        )
+
+    await _sync_sheet_for_place(
+        body.place_id,
+        {
+            "P5 Emails":
+                f"✅ {len(emails)} emails",
+            "Email 1 — Asunto":
+                _asunto_email(0),
+            "Email 2 — Asunto":
+                _asunto_email(1),
+            "Email 3 — Asunto":
+                _asunto_email(2),
+        },
     )
 
     return {
@@ -918,6 +1102,71 @@ async def ejecutar_p6(
             "error":
                 resultado["error"],
         }
+
+    sheet_updates = {}
+
+    if body.to_email:
+        sheet_updates["Email Destino"] = (
+            body.to_email
+        )
+
+    estado_p6 = resultado.get("status")
+
+    if estado_p6 == "pending_approval":
+        sheet_updates["P6 Estado"] = (
+            "👀 Pendiente aprobación"
+        )
+
+    elif estado_p6 == "enviado":
+        sheet_updates["P6 Estado"] = (
+            "✅ Enviado"
+        )
+
+        if resultado.get("enviado_a"):
+            sheet_updates["Email Destino"] = (
+                resultado["enviado_a"]
+            )
+
+        try:
+            filas_email = await supabase_select(
+                "emails",
+                {
+                    "place_id":
+                        f"eq.{body.place_id}"
+                },
+            )
+
+            if filas_email:
+                fila_email = filas_email[0]
+
+                dia = int(
+                    resultado.get("dia")
+                    or fila_email.get(
+                        "current_email_day"
+                    )
+                    or 1
+                )
+
+                fecha_envio = fila_email.get(
+                    f"sent_at_day{dia}"
+                )
+
+                if fecha_envio:
+                    sheet_updates[
+                        "Fecha Envío"
+                    ] = fecha_envio
+
+        except Exception as exc:
+            print(
+                "[Sheets] warning leyendo "
+                f"fecha P6: {exc}"
+            )
+
+    if sheet_updates:
+        await _sync_sheet_for_place(
+            body.place_id,
+            sheet_updates,
+        )
 
     return resultado
 
