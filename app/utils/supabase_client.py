@@ -39,6 +39,20 @@ async def supabase_update(tabla: str, filtro: str, data: dict):
     return response.json() if response.text else {}
 
 
+async def supabase_update_keypoints(place_id: str, data: dict):
+    import urllib.parse
+    url = f"{SUPABASE_URL}/rest/v1/keypoints?place_id=eq.{urllib.parse.quote(place_id)}"
+    headers = {**SUPABASE_HEADERS, "Prefer": "return=minimal"}
+    try:
+        response = requests.patch(url, json=data, headers=headers, timeout=SUPABASE_TIMEOUT)
+    except requests.exceptions.RequestException as e:
+        print(f"Supabase update_keypoints TIMEOUT/ERROR: {e}")
+        return {"status": "error", "error": str(e)}
+    if response.status_code not in (200, 201, 204):
+        print(f"Supabase update_keypoints error {response.status_code}: {response.text}")
+    return {"status": response.status_code}
+
+
 async def supabase_update_lead(place_id: str, data: dict):
     import urllib.parse
     url = f"{SUPABASE_URL}/rest/v1/leads?place_id=eq.{urllib.parse.quote(place_id)}"

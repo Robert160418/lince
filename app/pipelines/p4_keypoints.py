@@ -7,6 +7,7 @@ from app.config import OPENAI_API_KEY
 from app.utils.supabase_client import (
     supabase_select,
     supabase_update_lead,
+    supabase_update_keypoints,
     supabase_insert,
 )
 
@@ -862,9 +863,7 @@ Responde SOLO JSON válido con esta estructura exacta:
     # GUARDAR KEYPOINTS
     # ---------------------------------------------------------------
 
-    insert_result = await supabase_insert(
-        "keypoints",
-        {
+    keypoints_payload = {
             "place_id": place_id,
 
             "company_name":
@@ -926,25 +925,42 @@ Responde SOLO JSON válido con esta estructura exacta:
 
             "lead_score":
                 lead_score,
+    }
+
+    existing_keypoints = await supabase_select(
+        "keypoints",
+        {
+            "place_id": f"eq.{place_id}",
         },
     )
 
-    insert_status = (
-        insert_result.get("status")
-        if isinstance(insert_result, dict)
+    if existing_keypoints:
+        save_result = await supabase_update_keypoints(
+            place_id,
+            keypoints_payload,
+        )
+    else:
+        save_result = await supabase_insert(
+            "keypoints",
+            keypoints_payload,
+        )
+
+    save_status = (
+        save_result.get("status")
+        if isinstance(save_result, dict)
         else None
     )
 
-    if insert_status not in (200, 201, 204):
+    if save_status not in (200, 201, 204):
         detalle = (
-            insert_result.get("error")
-            if isinstance(insert_result, dict)
+            save_result.get("error")
+            if isinstance(save_result, dict)
             else ""
         )
 
         print(
             "P4 ERROR: keypoints no fueron guardados "
-            f"en Supabase. status={insert_status} "
+            f"en Supabase. status={save_status} "
             f"detalle={detalle}"
         )
 
