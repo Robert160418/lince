@@ -949,6 +949,64 @@ async def test_batch_score_70_pasa_crm_p5_pero_no_envia(
     assert resultado["enviados"] == 0
 
 
+@pytest.mark.asyncio
+async def test_batch_conserva_estado_skipped_del_portal(
+    monkeypatch,
+):
+    """Un webhook no configurado no puede registrarse como CRM ok."""
+
+    lead = _lead_base()
+
+    async def fake_supabase_select(table, filters):
+        return [lead] if table == "leads" else []
+
+    async def fake_reviews(*args, **kwargs):
+        return []
+
+    async def fake_guardar_reviews(*args, **kwargs):
+        return 0
+
+    async def fake_p4(*args, **kwargs):
+        return {
+            "lead_score": 80,
+            "problema_principal": "Problema test",
+            "oportunidad": "Oportunidad test",
+            "servicios_recomendados": ["Página web profesional"],
+            "servicio_principal": "Página web profesional",
+        }
+
+    async def fake_portal(*args, **kwargs):
+        return {
+            "status": "skipped",
+            "reason": "webhook no configurado",
+        }
+
+    async def fake_p5(*args, **kwargs):
+        return {
+            "emails": [],
+            "guardado": True,
+            "requiere_aprobacion": True,
+        }
+
+    async def fake_sleep(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(batch_processor, "_SHEETS_AVAILABLE", False)
+    monkeypatch.setattr(batch_processor, "supabase_select", fake_supabase_select)
+    monkeypatch.setattr(batch_processor, "obtener_reviews", fake_reviews)
+    monkeypatch.setattr(batch_processor, "procesar_y_guardar_reviews", fake_guardar_reviews)
+    monkeypatch.setattr(batch_processor, "generar_keypoints", fake_p4)
+    monkeypatch.setattr(batch_processor, "push_lead_to_portal", fake_portal)
+    monkeypatch.setattr(batch_processor, "generar_secuencia_emails", fake_p5)
+    monkeypatch.setattr(batch_processor.asyncio, "sleep", fake_sleep)
+
+    resultado = await batch_processor.process_lote(lead["lote_id"])
+    crm = resultado["results"][0]["steps"]["crm"]
+
+    assert crm["status"] == "skipped"
+    assert crm["reason"] == "webhook no configurado"
+
+
 # ===================================================================
 # P5 — GENERACIÓN SEGURA
 # ===================================================================
