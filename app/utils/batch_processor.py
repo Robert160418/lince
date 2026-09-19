@@ -482,19 +482,41 @@ async def process_lote(lote_id: str) -> dict:
 
             try:
 
-                await push_lead_to_portal(
+                crm_result = await push_lead_to_portal(
                     lead,
                     kp,
                 )
 
-                result["steps"]["crm"] = {
-                    "status": "ok"
-                }
-
-                print(
-                    f"  CRM ok — {name} enviado "
-                    f"como candidato comercial"
+                crm_status = (
+                    crm_result.get("status")
+                    if isinstance(crm_result, dict)
+                    else "error"
                 )
+
+                result["steps"]["crm"] = (
+                    crm_result
+                    if isinstance(crm_result, dict)
+                    else {
+                        "status": "error",
+                        "error": "Respuesta inválida del puente CRM",
+                    }
+                )
+
+                if crm_status == "ok":
+                    print(
+                        f"  CRM ok — {name} enviado "
+                        f"como candidato comercial"
+                    )
+                else:
+                    crm_detail = (
+                        result["steps"]["crm"].get("reason")
+                        or result["steps"]["crm"].get("error")
+                        or "sin detalle"
+                    )
+                    print(
+                        f"  CRM {crm_status} — {name}: "
+                        f"{crm_detail}"
+                    )
 
             except Exception as e:
 
