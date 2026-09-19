@@ -1398,3 +1398,906 @@ async def test_daily_sequence_no_inicia_campanas(
 
 
 @pytest.mark.asyncio
+async def test_daily_sequence_estado_incierto_va_revision_manual(
+    monkeypatch,
+):
+    """
+    current_email_day=1 sin sent_at_day1 nunca debe avanzar.
+    """
+
+    row = {
+        "place_id":
+            "TEST_PLACE_001",
+
+        "company_name":
+            "Negocio Seguro",
+
+        "recipient_email":
+            "contacto@example.com",
+
+        "current_email_day":
+            1,
+
+        "sent_at_day1":
+            None,
+
+        "sequence_stopped":
+            False,
+
+        "replied":
+            False,
+    }
+
+    async def fake_select(
+        table,
+        filters,
+    ):
+        if table == "emails":
+            return [row]
+
+        return []
+
+    async def p6_prohibido(
+        *args,
+        **kwargs,
+    ):
+        raise AssertionError(
+            "P6 NO debe ejecutarse "
+            "con estado incierto."
+        )
+
+    async def fake_sheet(
+        *args,
+        **kwargs,
+    ):
+        return None
+
+    monkeypatch.setattr(
+        daily_sequence,
+        "supabase_select",
+        fake_select,
+    )
+
+    monkeypatch.setattr(
+        daily_sequence,
+        "ejecutar_secuencia",
+        p6_prohibido,
+    )
+
+    monkeypatch.setattr(
+        daily_sequence,
+        "_actualizar_sheet",
+        fake_sheet,
+    )
+
+    resultado = (
+        await daily_sequence
+        .run_daily_sequence()
+    )
+
+    assert resultado["enviados"] == 0
+
+    assert (
+        resultado["revision_manual"]
+        == 1
+    )
+
+    assert (
+        resultado["resultados"][0]["status"]
+        == "manual_review_required"
+    )
+
+
+@pytest.mark.asyncio
+async def test_daily_solo_status_enviado_cuenta_como_envio(
+    monkeypatch,
+):
+    """
+    Un estado de revisión manual de P6 jamás incrementa enviados.
+    """
+
+    hace_48_horas = (
+        datetime.now(
+            timezone.utc
+        )
+        - timedelta(
+            hours=48
+        )
+    ).isoformat()
+
+    row = {
+        "place_id":
+            "TEST_PLACE_001",
+
+        "company_name":
+            "Negocio Seguro",
+
+        "recipient_email":
+            "contacto@example.com",
+
+        "current_email_day":
+            1,
+
+        "sent_at_day1":
+            hace_48_horas,
+
+        "sequence_stopped":
+            False,
+
+        "replied":
+            False,
+    }
+
+    async def fake_select(
+        table,
+        filters,
+    ):
+        if table == "emails":
+            return [row]
+
+        return []
+
+    async def fake_p6(
+        *args,
+        **kwargs,
+    ):
+        return {
+            "status":
+                "manual_review_required",
+
+            "mensaje":
+                "Estado incierto simulado",
+        }
+
+    async def fake_sheet(
+        *args,
+        **kwargs,
+    ):
+        return None
+
+    monkeypatch.setattr(
+        daily_sequence,
+        "supabase_select",
+        fake_select,
+    )
+
+    monkeypatch.setattr(
+        daily_sequence,
+        "ejecutar_secuencia",
+        fake_p6,
+    )
+
+    monkeypatch.setattr(
+        daily_sequence,
+        "_actualizar_sheet",
+        fake_sheet,
+    )
+
+    resultado = (
+        await daily_sequence
+        .run_daily_sequence()
+    )
+
+    assert resultado["enviados"] == 0
+
+    assert (
+        resultado["revision_manual"]
+        == 1
+    )
+
+
+# ===================================================================
+# TEST FINAL DE INVARIANTES
+# ===================================================================
+
+
+def test_invariantes_lince_v2():
+    """
+    Verifica algunas decisiones esenciales de arquitectura.
+    """
+
+    assert (
+        batch_processor.MIN_SCORE_CRM
+        == 70
+    )
+
+    assert (
+        p6_email_sender.FROM_NAME
+        == "Roberto | Noboweb"
+    )
+
+    assert (
+        p5_email_generator.MAX_EMAIL_WORDS
+        == 120
+    )
+
+    assert (
+        daily_sequence.HORAS_ENTRE_EMAILS
+        == 24
+    )
+
+    # ===================================================================
+# MAIN API — SEGURIDAD DE ENDPOINTS
+# ===================================================================
+
+
+def test_main_p6_bloqueado_si_task_secret_no_existe(
+    monkeypatch,
+):
+    """
+    Si TASK_SECRET no está configurado,
+    /pipeline/p6 debe fallar cerrado con 503.
+
+    P6 nunca debe ejecutarse.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    async def p6_prohibido(*args, **kwargs):
+        raise AssertionError(
+            "P6 no debía ejecutarse sin TASK_SECRET."
+        )
+
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "",
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "ADMIN_SESSION_SECRET",
+        "",
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "ejecutar_secuencia",
+        p6_prohibido,
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/pipeline/p6",
+        json={
+            "place_id": "TEST_PLACE_001",
+            "approved_by_human": True,
+        },
+    )
+
+    assert response.status_code == 503
+
+
+def test_main_p6_rechaza_secret_incorrecto(
+    monkeypatch,
+):
+    """
+    Un secreto incorrecto debe devolver 403
+    antes de llegar a P6.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    async def p6_prohibido(*args, **kwargs):
+        raise AssertionError(
+            "P6 no debía ejecutarse con secreto incorrecto."
+        )
+
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "secret-test-correcto",
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "ejecutar_secuencia",
+        p6_prohibido,
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/pipeline/p6",
+        headers={
+            "X-Task-Secret":
+                "secret-equivocado",
+        },
+        json={
+            "place_id": "TEST_PLACE_001",
+            "approved_by_human": True,
+        },
+    )
+
+    assert response.status_code == 403
+
+
+def test_main_p6_pasa_aprobacion_humana_al_motor(
+    monkeypatch,
+):
+    """
+    El endpoint debe transmitir explícitamente
+    approved_by_human al motor P6.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    llamadas = []
+
+    async def fake_p6(
+        place_id,
+        approved_by_human=False,
+        expected_day=None,
+        expected_preview_fingerprint=None,
+    ):
+        llamadas.append({
+            "place_id": place_id,
+            "approved_by_human": approved_by_human,
+            "expected_day": expected_day,
+            "expected_preview_fingerprint": expected_preview_fingerprint,
+        })
+
+        return {
+            "status":
+                "pending_approval"
+        }
+
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "secret-test",
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "ejecutar_secuencia",
+        fake_p6,
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/pipeline/p6",
+        headers={
+            "X-Task-Secret":
+                "secret-test",
+        },
+        json={
+            "place_id":
+                "TEST_PLACE_001",
+
+            "approved_by_human":
+                False,
+        },
+    )
+
+    assert response.status_code == 200
+
+    assert len(llamadas) == 1
+
+    assert (
+        llamadas[0]["approved_by_human"]
+        is False
+    )
+    assert llamadas[0]["expected_day"] is None
+    assert llamadas[0]["expected_preview_fingerprint"] is None
+
+
+def test_main_antiguo_get_recipient_email_ya_no_existe():
+    """
+    La antigua ruta GET que modificaba destinatarios
+    debe haber desaparecido.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.get(
+        "/setup/recipient-email/"
+        "TEST_PLACE_001/"
+        "test@example.com"
+    )
+
+    assert response.status_code == 404
+
+
+def test_main_recipient_email_requiere_secret(
+    monkeypatch,
+):
+    """
+    La nueva ruta POST para cambiar destinatario
+    debe exigir autenticación.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "secret-test",
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/setup/recipient-email",
+        json={
+            "place_id":
+                "TEST_PLACE_001",
+
+            "email":
+                "test@example.com",
+        },
+    )
+
+    assert response.status_code == 403
+
+
+def test_main_sequence_score_69_no_ejecuta_p5(
+    monkeypatch,
+):
+    """
+    /pipeline/sequence debe respetar el gate.
+
+    Score 69:
+    P5 no puede ejecutarse.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    async def fake_reviews(
+        *args,
+        **kwargs,
+    ):
+        return []
+
+    async def fake_guardar_reviews(
+        *args,
+        **kwargs,
+    ):
+        return 0
+
+    async def fake_p3(
+        *args,
+        **kwargs,
+    ):
+        return {
+            "website_title":
+                "Test"
+        }
+
+    async def fake_p4(
+        *args,
+        **kwargs,
+    ):
+        return {
+            "lead_score": 69,
+            "problema_principal":
+                "Problema test",
+        }
+
+    async def p5_prohibido(
+        *args,
+        **kwargs,
+    ):
+        raise AssertionError(
+            "P5 no debía ejecutarse para score 69."
+        )
+
+    monkeypatch.setattr(
+        main_module,
+        "obtener_reviews",
+        fake_reviews,
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "procesar_y_guardar_reviews",
+        fake_guardar_reviews,
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "analizar_y_guardar",
+        fake_p3,
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "generar_keypoints",
+        fake_p4,
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "generar_secuencia_emails",
+        p5_prohibido,
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/pipeline/sequence",
+        json={
+            "place_id":
+                "TEST_PLACE_001",
+
+            "url":
+                "https://example.com",
+
+            "max_reviews":
+                1,
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert (
+        data["p5"]["status"]
+        == "skipped"
+    )
+
+    assert (
+        data["p5"]["lead_score"]
+        == 69
+    )
+
+
+def test_main_daily_sequence_fail_closed_sin_secret(
+    monkeypatch,
+):
+    """
+    El cron tampoco puede quedar abierto
+    si TASK_SECRET desaparece.
+    """
+
+    from fastapi.testclient import TestClient
+    import app.main as main_module
+
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "",
+    )
+
+    client = TestClient(
+        main_module.app
+    )
+
+    response = client.post(
+        "/tasks/daily-sequence"
+    )
+
+    assert response.status_code == 503
+# ===================================================================
+# PREVIEW P6
+# ===================================================================
+
+@pytest.mark.asyncio
+async def test_p6_email_invalido_devuelve_preview(
+    monkeypatch,
+):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "invalido",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto",
+        "email_1_body": "Cuerpo",
+    }
+
+    async def fake_select(table, filters):
+        return [row]
+
+    def fail_brevo(*args, **kwargs):
+        raise AssertionError("Brevo no debe ejecutarse.")
+
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"]
+    )
+
+    assert resultado["status"] == "pending_approval"
+    assert resultado["preview"]["recipient_email"] == "invalido"
+    assert resultado["preview"]["recipient_email_valid"] is False
+
+@pytest.mark.asyncio
+async def test_p6_email_invalido_bloquea_aprobacion(
+    monkeypatch,
+):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "invalido",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto",
+        "email_1_body": "Cuerpo",
+    }
+
+    async def fake_select(table, filters):
+        return [row]
+
+    def fail_brevo(*args, **kwargs):
+        raise AssertionError("Brevo no debe ejecutarse.")
+
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+
+    fingerprint = p6_email_sender._build_preview_fingerprint(
+        row["place_id"],
+        1,
+        row["recipient_email"],
+        row["email_1_subject"],
+        row["email_1_body"],
+    )
+
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"],
+        approved_by_human=True,
+        expected_day=1,
+        expected_preview_fingerprint=fingerprint,
+    )
+
+    assert "error" in resultado
+    assert "válido" in resultado["error"]
+
+@pytest.mark.parametrize("replied, sequence_stopped", [
+    (True, False),
+    (False, True),
+])
+@pytest.mark.asyncio
+async def test_p6_replied_o_stopped_no_da_preview(
+    monkeypatch,
+    replied,
+    sequence_stopped,
+):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "replied": replied,
+        "sequence_stopped": sequence_stopped,
+        "email_1_subject": "Asunto",
+        "email_1_body": "Cuerpo",
+    }
+
+    async def fake_select(table, filters):
+        return [row]
+
+    def fail_patch(*args, **kwargs):
+        raise AssertionError("_patch_email_row NO debe llamarse.")
+
+    def fail_brevo(*args, **kwargs):
+        raise AssertionError("Brevo no debe ejecutarse.")
+
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"]
+    )
+
+    assert resultado["status"] == "detenida"
+    assert "preview" not in resultado
+
+@pytest.mark.asyncio
+async def test_p6_sent_at_inconsistente_bloquea_antes_de_preview(
+    monkeypatch,
+):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "sent_at_day1": "2026-08-23T10:00:00+00:00",
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto",
+        "email_1_body": "Cuerpo",
+    }
+
+    async def fake_select(table, filters):
+        return [row]
+
+    def fail_patch(*args, **kwargs):
+        raise AssertionError("_patch_email_row NO debe llamarse.")
+
+    def fail_brevo(*args, **kwargs):
+        raise AssertionError("Brevo NO debe ejecutarse.")
+
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"]
+    )
+
+    assert resultado["status"] == "manual_review_required"
+    assert "preview" not in resultado
+
+
+@pytest.mark.asyncio
+async def test_p6_expected_day_race_condition(monkeypatch):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 1,
+        "sent_at_day1": "2026-08-23T10:00:00+00:00",
+        "replied": False,
+        "sequence_stopped": False,
+        "email_2_subject": "Asunto 2",
+        "email_2_body": "Cuerpo 2",
+    }
+    async def fake_select(table, filters): return [row]
+    def fail_patch(*args, **kwargs): raise AssertionError("_patch_email_row NO debe llamarse.")
+    def fail_brevo(*args, **kwargs): raise AssertionError("Brevo NO debe ejecutarse.")
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+
+    fingerprint = p6_email_sender._build_preview_fingerprint("TEST_PLACE_001", 1, "contacto@example.com", "Asunto", "Cuerpo")
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"], approved_by_human=True, expected_day=1, expected_preview_fingerprint=fingerprint
+    )
+    assert resultado["status"] == "manual_review_required"
+    assert "secuencia cambió" in resultado["mensaje"]
+
+@pytest.mark.asyncio
+async def test_p6_aprobacion_sin_expected_day_falla(monkeypatch):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto 1",
+        "email_1_body": "Cuerpo 1",
+    }
+    async def fake_select(table, filters): return [row]
+    def fail_patch(*args, **kwargs): raise AssertionError("_patch_email_row NO debe llamarse.")
+    def fail_brevo(*args, **kwargs): raise AssertionError("Brevo NO debe ejecutarse.")
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"], approved_by_human=True, expected_day=None
+    )
+    assert resultado["status"] == "manual_review_required"
+    assert "Falta la referencia" in resultado["mensaje"]
+
+@pytest.mark.asyncio
+async def test_p6_aprobacion_sin_fingerprint_falla(monkeypatch):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto 1",
+        "email_1_body": "Cuerpo 1",
+    }
+    async def fake_select(table, filters): return [row]
+    def fail_patch(*args, **kwargs): raise AssertionError("_patch_email_row NO debe llamarse.")
+    def fail_brevo(*args, **kwargs): raise AssertionError("Brevo NO debe ejecutarse.")
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"], approved_by_human=True, expected_day=1, expected_preview_fingerprint=None
+    )
+    assert resultado["status"] == "manual_review_required"
+    assert "Falta la referencia exacta" in resultado["mensaje"]
+
+@pytest.mark.asyncio
+async def test_p6_aprobacion_con_contenido_modificado_falla(monkeypatch):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto B",
+        "email_1_body": "Cuerpo B",
+    }
+    async def fake_select(table, filters): return [row]
+    def fail_patch(*args, **kwargs): raise AssertionError("_patch_email_row NO debe llamarse.")
+    def fail_brevo(*args, **kwargs): raise AssertionError("Brevo NO debe ejecutarse.")
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+    old_fingerprint = p6_email_sender._build_preview_fingerprint(
+        place_id="TEST_PLACE_001", dia=1, to_email="contacto@example.com", subject="Asunto A", body="Cuerpo A"
+    )
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"], approved_by_human=True, expected_day=1, expected_preview_fingerprint=old_fingerprint
+    )
+    assert resultado["status"] == "manual_review_required"
+    assert "contenido o destinatario cambió" in resultado["mensaje"]
+
+@pytest.mark.asyncio
+async def test_p6_aprobacion_con_espacio_adicional_falla(monkeypatch):
+    row = {
+        "place_id": "TEST_PLACE_001",
+        "company_name": "Negocio Seguro",
+        "recipient_email": "contacto@example.com",
+        "current_email_day": 0,
+        "replied": False,
+        "sequence_stopped": False,
+        "email_1_subject": "Asunto A",
+        "email_1_body": "Cuerpo A ",
+    }
+    async def fake_select(table, filters): return [row]
+    def fail_patch(*args, **kwargs): raise AssertionError("_patch_email_row NO debe llamarse.")
+    def fail_brevo(*args, **kwargs): raise AssertionError("Brevo NO debe ejecutarse.")
+    monkeypatch.setattr(p6_email_sender, "supabase_select", fake_select)
+    monkeypatch.setattr(p6_email_sender, "_patch_email_row", fail_patch)
+    monkeypatch.setattr(p6_email_sender, "_enviar_brevo", fail_brevo)
+    old_fingerprint = p6_email_sender._build_preview_fingerprint(
+        place_id="TEST_PLACE_001", dia=1, to_email="contacto@example.com", subject="Asunto A", body="Cuerpo A"
+    )
+    resultado = await p6_email_sender.ejecutar_secuencia(
+        row["place_id"], approved_by_human=True, expected_day=1, expected_preview_fingerprint=old_fingerprint
+    )
+    assert resultado["status"] == "manual_review_required"
+    assert "contenido o destinatario cambió" in resultado["mensaje"]
+
+# ===================================================================
+# UI HTML INTEGRATION TESTS
+# ===================================================================
+
+def test_html_ui_safe_patterns():
+    import os
+    from pathlib import Path
+
+    html_path = Path(__file__).parent.parent / "app" / "templates" / "index.html"
+    content = html_path.read_text(encoding="utf-8")
+
+    assert "TASK_SECRET" not in content
+    assert "ADMIN_PASSWORD" not in content
+    assert "ADMIN_SESSION_SECRET" not in content
+    assert "/admin/login" in content
+    assert "adminFetch(" in content
+    assert "escapeHtml(" in content
+    assert "POST" in content and "/setup/recipient-email" in content
+    assert "setup/recipient-email/${" not in content
+    assert "approved_by_human:false" in content
+    assert "approved_by_human:true" in content
+    assert "expected_day:" in content
+    assert "expected_preview_fingerprint:" in content
+    assert 'class="overlay show" id="loginOverlay"' in content or "class=\"overlay show\" id=\"loginOverlay\"" in content
+    assert "approveAndSendP6('${" not in content
