@@ -778,6 +778,64 @@ async def test_batch_score_69_no_pasa_a_crm_ni_p5(
 
 
 @pytest.mark.asyncio
+async def test_batch_continua_si_sheets_supera_cuota(
+    monkeypatch,
+):
+    """Un error 429 de Sheets no puede detener P2-P5."""
+
+    lead = _lead_base()
+    p4_calls = []
+
+    async def fake_supabase_select(table, filters):
+        return [lead] if table == "leads" else []
+
+    async def sheets_quota(*args, **kwargs):
+        raise RuntimeError("Google Sheets 429 quota exceeded")
+
+    async def fake_reviews(*args, **kwargs):
+        return []
+
+    async def fake_guardar_reviews(*args, **kwargs):
+        return 0
+
+    async def fake_p3(*args, **kwargs):
+        return {"audit_ok": True}
+
+    async def fake_p4(*args, **kwargs):
+        p4_calls.append(True)
+        return {
+            "lead_score": 69,
+            "problema_principal": "Problema test",
+            "oportunidad": "Oportunidad test",
+            "servicios_recomendados": ["Página web profesional"],
+            "servicio_principal": "Página web profesional",
+        }
+
+    async def no_debe_llamarse(*args, **kwargs):
+        raise AssertionError("No debía superar el gate comercial")
+
+    async def fake_sleep(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(batch_processor, "_SHEETS_AVAILABLE", True)
+    monkeypatch.setattr(batch_processor, "create_lote_sheet", sheets_quota)
+    monkeypatch.setattr(batch_processor, "supabase_select", fake_supabase_select)
+    monkeypatch.setattr(batch_processor, "obtener_reviews", fake_reviews)
+    monkeypatch.setattr(batch_processor, "procesar_y_guardar_reviews", fake_guardar_reviews)
+    monkeypatch.setattr(batch_processor, "analizar_y_guardar", fake_p3)
+    monkeypatch.setattr(batch_processor, "generar_keypoints", fake_p4)
+    monkeypatch.setattr(batch_processor, "push_lead_to_portal", no_debe_llamarse)
+    monkeypatch.setattr(batch_processor, "generar_secuencia_emails", no_debe_llamarse)
+    monkeypatch.setattr(batch_processor.asyncio, "sleep", fake_sleep)
+
+    resultado = await batch_processor.process_lote(lead["lote_id"])
+
+    assert p4_calls == [True]
+    assert resultado["results"][0]["steps"]["p4"]["status"] == "ok"
+    assert resultado["results"][0]["steps"]["p5"]["status"] == "skipped"
+
+
+@pytest.mark.asyncio
 async def test_batch_score_70_pasa_crm_p5_pero_no_envia(
     monkeypatch,
 ):
