@@ -209,3 +209,21 @@ def test_setup_recipient_email_dual_auth(mock_config, client, monkeypatch):
     client.post("/admin/login", json={"password": "super_secret"})
     res = client.post("/setup/recipient-email", json=body)
     assert res.status_code == 200
+
+
+@pytest.mark.parametrize(("path", "body"), [
+    ("/pipeline/p1", {"query": "clinicas dentales Quito", "limit": 1}),
+    ("/pipeline/p2", {"place_id": "test", "max_reviews": 1}),
+    ("/pipeline/p3", {"place_id": "test", "url": "https://example.com"}),
+    ("/pipeline/p4", {"place_id": "test"}),
+    ("/pipeline/batch", {"lote_id": "test"}),
+    ("/pipeline/sequence", {"place_id": "test", "url": "https://example.com", "max_reviews": 1}),
+])
+def test_internal_pipeline_endpoints_reject_unauthenticated_requests(
+    mock_config,
+    client,
+    path,
+    body,
+):
+    response = client.post(path, json=body)
+    assert response.status_code == 403

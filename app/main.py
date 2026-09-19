@@ -666,13 +666,23 @@ async def get_lotes():
 
 @app.post("/pipeline/batch")
 async def ejecutar_batch(
+    request: Request,
     body: BatchBody,
+    x_task_secret: str = Header(
+        default="",
+        alias="X-Task-Secret",
+    ),
 ):
     """
     Ejecuta P2-P5 mediante el batch seguro.
 
     El batch de Lince 2.0 NO ejecuta P6.
     """
+
+    verify_admin_or_task_secret(
+        request,
+        x_task_secret,
+    )
 
     return await process_lote(
         body.lote_id
@@ -686,9 +696,19 @@ async def ejecutar_batch(
 
 @app.post("/pipeline/p1")
 async def ejecutar_p1(
+    request: Request,
     body: P1Body,
     background_tasks: BackgroundTasks,
+    x_task_secret: str = Header(
+        default="",
+        alias="X-Task-Secret",
+    ),
 ):
+    verify_admin_or_task_secret(
+        request,
+        x_task_secret,
+    )
+
     resultados = (
         await scrape_google_maps(
             query=body.query,
@@ -812,8 +832,18 @@ async def ejecutar_p1(
 
 @app.post("/pipeline/p2")
 async def ejecutar_p2(
+    request: Request,
     body: P2Body,
+    x_task_secret: str = Header(
+        default="",
+        alias="X-Task-Secret",
+    ),
 ):
+    verify_admin_or_task_secret(
+        request,
+        x_task_secret,
+    )
+
     reviews = (
         await obtener_reviews(
             place_id=body.place_id,
@@ -860,8 +890,18 @@ async def ejecutar_p2(
 
 @app.post("/pipeline/p3")
 async def ejecutar_p3(
+    request: Request,
     body: P3Body,
+    x_task_secret: str = Header(
+        default="",
+        alias="X-Task-Secret",
+    ),
 ):
+    verify_admin_or_task_secret(
+        request,
+        x_task_secret,
+    )
+
     datos = (
         await analizar_y_guardar(
             place_id=body.place_id,
@@ -893,8 +933,18 @@ async def ejecutar_p3(
 
 @app.post("/pipeline/p4")
 async def ejecutar_p4(
+    request: Request,
     body: P4Body,
+    x_task_secret: str = Header(
+        default="",
+        alias="X-Task-Secret",
+    ),
 ):
+    verify_admin_or_task_secret(
+        request,
+        x_task_secret,
+    )
+
     resultado = (
         await generar_keypoints(
             body.place_id
@@ -1178,7 +1228,12 @@ async def ejecutar_p6(
 
 @app.post("/pipeline/sequence")
 async def ejecutar_secuencia_completa(
+    request: Request,
     body: SequenceBody,
+    x_task_secret: str = Header(
+        default="",
+        alias="X-Task-Secret",
+    ),
 ):
     """
     Endpoint histórico/manual.
@@ -1188,6 +1243,11 @@ async def ejecutar_secuencia_completa(
 
     NO ejecuta P6.
     """
+
+    verify_admin_or_task_secret(
+        request,
+        x_task_secret,
+    )
 
     salida = {
         "status": "ok",
