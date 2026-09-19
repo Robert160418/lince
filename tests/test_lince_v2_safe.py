@@ -1863,6 +1863,12 @@ def test_main_sequence_score_69_no_ejecuta_p5(
     from fastapi.testclient import TestClient
     import app.main as main_module
 
+    monkeypatch.setattr(
+        main_module,
+        "TASK_SECRET",
+        "test_task_secret",
+    )
+
     async def fake_reviews(
         *args,
         **kwargs,
@@ -1938,6 +1944,10 @@ def test_main_sequence_score_69_no_ejecuta_p5(
 
     response = client.post(
         "/pipeline/sequence",
+        headers={
+            "X-Task-Secret":
+                "test_task_secret",
+        },
         json={
             "place_id":
                 "TEST_PLACE_001",
