@@ -148,16 +148,50 @@ async def process_lote(lote_id: str) -> dict:
     # ------------------------------------------------------------------
 
     sheet_url = None
+    sheets_enabled = _SHEETS_AVAILABLE
 
-    if _SHEETS_AVAILABLE:
-        await create_lote_sheet(lote_id)
+    async def safe_update_lead_in_sheet(
+        current_lote_id,
+        place_id,
+        updates,
+    ):
+        """Actualiza Sheets sin permitir que una cuota detenga el lote."""
+        nonlocal sheets_enabled
 
-        for lead in leads:
-            await add_lead_to_sheet(lote_id, lead)
+        if not sheets_enabled:
+            return False
 
-        sheet_url = await get_sheet_url()
+        try:
+            return await update_lead_in_sheet(
+                current_lote_id,
+                place_id,
+                updates,
+            )
+        except Exception as exc:
+            sheets_enabled = False
+            print(
+                "⚠️ Google Sheets se desactivó para este lote: "
+                f"{exc}"
+            )
+            return False
 
-        print(f"📊 Google Sheet inicializado: {sheet_url}")
+    if sheets_enabled:
+        try:
+            await create_lote_sheet(lote_id)
+
+            for lead in leads:
+                await add_lead_to_sheet(lote_id, lead)
+
+            sheet_url = await get_sheet_url()
+
+            print(f"📊 Google Sheet inicializado: {sheet_url}")
+
+        except Exception as exc:
+            sheets_enabled = False
+            print(
+                "⚠️ Google Sheets no disponible para este lote — "
+                f"se continuará con Supabase y CRM: {exc}"
+            )
 
     else:
         print(
@@ -219,7 +253,7 @@ async def process_lote(lote_id: str) -> dict:
                 "reviews": len(reviews),
             }
 
-            if _SHEETS_AVAILABLE:
+            if sheets_enabled:
 
                 p2_text = (
                     f"✅ {len(reviews)} reviews"
@@ -227,7 +261,7 @@ async def process_lote(lote_id: str) -> dict:
                     else "— Sin reviews disponibles"
                 )
 
-                await update_lead_in_sheet(
+                await safe_update_lead_in_sheet(
                     lote_id,
                     place_id,
                     {
@@ -247,8 +281,8 @@ async def process_lote(lote_id: str) -> dict:
 
             lead_ok = False
 
-            if _SHEETS_AVAILABLE:
-                await update_lead_in_sheet(
+            if sheets_enabled:
+                await safe_update_lead_in_sheet(
                     lote_id,
                     place_id,
                     {
@@ -275,8 +309,8 @@ async def process_lote(lote_id: str) -> dict:
                     "status": "ok"
                 }
 
-                if _SHEETS_AVAILABLE:
-                    await update_lead_in_sheet(
+                if sheets_enabled:
+                    await safe_update_lead_in_sheet(
                         lote_id,
                         place_id,
                         {
@@ -296,8 +330,8 @@ async def process_lote(lote_id: str) -> dict:
 
                 lead_ok = False
 
-                if _SHEETS_AVAILABLE:
-                    await update_lead_in_sheet(
+                if sheets_enabled:
+                    await safe_update_lead_in_sheet(
                         lote_id,
                         place_id,
                         {
@@ -313,8 +347,8 @@ async def process_lote(lote_id: str) -> dict:
                 "reason": "sin website",
             }
 
-            if _SHEETS_AVAILABLE:
-                await update_lead_in_sheet(
+            if sheets_enabled:
+                await safe_update_lead_in_sheet(
                     lote_id,
                     place_id,
                     {
@@ -347,8 +381,8 @@ async def process_lote(lote_id: str) -> dict:
 
                 lead_ok = False
 
-                if _SHEETS_AVAILABLE:
-                    await update_lead_in_sheet(
+                if sheets_enabled:
+                    await safe_update_lead_in_sheet(
                         lote_id,
                         place_id,
                         {
@@ -421,7 +455,7 @@ async def process_lote(lote_id: str) -> dict:
                     "califica": califica_comercialmente,
                 }
 
-                if _SHEETS_AVAILABLE:
+                if sheets_enabled:
 
                     estado_p4 = (
                         "🎯 Candidato comercial"
@@ -429,7 +463,7 @@ async def process_lote(lote_id: str) -> dict:
                         else "📦 Analizado — no califica"
                     )
 
-                    await update_lead_in_sheet(
+                    await safe_update_lead_in_sheet(
                         lote_id,
                         place_id,
                         {
@@ -463,8 +497,8 @@ async def process_lote(lote_id: str) -> dict:
             p4_ok = False
             califica_comercialmente = False
 
-            if _SHEETS_AVAILABLE:
-                await update_lead_in_sheet(
+            if sheets_enabled:
+                await safe_update_lead_in_sheet(
                     lote_id,
                     place_id,
                     {
@@ -577,8 +611,8 @@ async def process_lote(lote_id: str) -> dict:
                 f"no supera el gate comercial"
             )
 
-            if _SHEETS_AVAILABLE:
-                await update_lead_in_sheet(
+            if sheets_enabled:
+                await safe_update_lead_in_sheet(
                     lote_id,
                     place_id,
                     {
@@ -606,8 +640,8 @@ async def process_lote(lote_id: str) -> dict:
 
                     lead_ok = False
 
-                    if _SHEETS_AVAILABLE:
-                        await update_lead_in_sheet(
+                    if sheets_enabled:
+                        await safe_update_lead_in_sheet(
                             lote_id,
                             place_id,
                             {
@@ -649,8 +683,8 @@ async def process_lote(lote_id: str) -> dict:
                         ],
                     }
 
-                    if _SHEETS_AVAILABLE:
-                        await update_lead_in_sheet(
+                    if sheets_enabled:
+                        await safe_update_lead_in_sheet(
                             lote_id,
                             place_id,
                             {
@@ -697,8 +731,8 @@ async def process_lote(lote_id: str) -> dict:
                 ),
             }
 
-            if _SHEETS_AVAILABLE:
-                await update_lead_in_sheet(
+            if sheets_enabled:
+                await safe_update_lead_in_sheet(
                     lote_id,
                     place_id,
                     {
@@ -752,8 +786,8 @@ async def process_lote(lote_id: str) -> dict:
 
             estado_final = "⚠️ Candidato sin emails"
 
-        if _SHEETS_AVAILABLE:
-            await update_lead_in_sheet(
+        if sheets_enabled:
+            await safe_update_lead_in_sheet(
                 lote_id,
                 place_id,
                 {
@@ -773,7 +807,7 @@ async def process_lote(lote_id: str) -> dict:
     # RESUMEN
     # ------------------------------------------------------------------
 
-    if _SHEETS_AVAILABLE:
+    if sheets_enabled:
 
         try:
             await write_summary_row(
