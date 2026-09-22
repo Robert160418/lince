@@ -60,8 +60,8 @@ Edita el archivo `.env` en la raíz del proyecto:
 
 ```bash
 # Supabase (ya configurado)
-SUPABASE_URL=https://bpycimognxzipvleqvsu.supabase.co
-SUPABASE_KEY=eyJhbGciOi...
+SUPABASE_URL=https://TU-PROYECTO.supabase.co
+SUPABASE_KEY=tu_service_role_key_aqui
 
 # APIs para leads (VACIAS = usan MOCKS)
 OUTSCRAPER_API_KEY=
@@ -255,8 +255,8 @@ grep OUTSCRAPER_API_KEY .env
 
 ```bash
 # === SUPABASE (Obligatorio) ===
-SUPABASE_URL=https://bpycimognxzipvleqvsu.supabase.co
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_URL=https://TU-PROYECTO.supabase.co
+SUPABASE_KEY=tu_service_role_key_aqui
 
 # === APIs para Leads (Recomendado: al menos OutScraper) ===
 OUTSCRAPER_API_KEY=sk_test_...           # Recomendado

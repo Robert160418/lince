@@ -65,7 +65,7 @@ echo "▶ [6/7] Configurando variables de entorno..."
 if [ ! -f /opt/lince/.env ]; then
     cat > /opt/lince/.env << 'ENVEOF'
 # ── Supabase ──────────────────────────────────────────────────
-SUPABASE_URL=https://bpycimognxzipvleqvsu.supabase.co
+SUPABASE_URL=https://TU-PROYECTO.supabase.co
 SUPABASE_KEY=REEMPLAZAR_CON_CLAVE_SUPABASE
 
 # ── Brevo ─────────────────────────────────────────────────────

@@ -9,8 +9,14 @@ echo ============================================================
 echo.
 echo Ingresa tu contrasena SSH cuando se pida (no se ve al escribir).
 echo.
+echo El secreto de la tarea se genera EN EL VPS y se queda alli: no viaja
+echo por este archivo ni por el repositorio.
+echo.
 
-ssh root@72.61.4.191 "cd /opt/lince && git pull origin main && grep -q TASK_SECRET .env 2>/dev/null || echo TASK_SECRET=lince-cron-2026 >> .env && printf '#!/bin/bash\nDATE=$(date +%%Y-%%m-%%d\ %%H:%%M:%%S)\necho \"[$$DATE] Secuencia diaria...\" >> /var/log/lince-sequence.log\ncurl -s -X POST https://lince.noboweb.com/tasks/daily-sequence -H \"X-Task-Secret: lince-cron-2026\" -H \"Content-Type: application/json\" >> /var/log/lince-sequence.log 2>&1\n' > /opt/lince/run_daily_sequence.sh && chmod +x /opt/lince/run_daily_sequence.sh && (crontab -l 2>/dev/null | grep -v daily_sequence; echo '0 9 * * * /opt/lince/run_daily_sequence.sh') | crontab - && systemctl restart lince && echo. && echo ============================================================ && echo   TODO LISTO - Cron configurado y servicio reiniciado && echo ============================================================ && crontab -l"
+REM La logica vive en setup_vps_cron.sh, versionado y revisable.
+REM Antes este .bat llevaba el secreto escrito a mano, y el repositorio es
+REM publico: cualquiera podia disparar la secuencia diaria de emails.
+ssh root@72.61.4.191 "cd /opt/lince && git pull origin main && bash setup_vps_cron.sh"
 
 echo.
 echo ============================================================

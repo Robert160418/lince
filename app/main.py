@@ -269,8 +269,18 @@ async def tarea_secuencia_diaria(x_task_secret: str = Header(default="")):
     Llamado por el cron del VPS cada manana via curl.
 
     Header requerido: X-Task-Secret: <valor de TASK_SECRET en .env>
+
+    Cierra por defecto: si TASK_SECRET no esta configurado, el endpoint
+    responde 503 en vez de quedar abierto. Antes, con el secreto vacio, la
+    condicion `if TASK_SECRET and ...` no se cumplia nunca y cualquiera que
+    conociera la URL podia disparar el envio de emails.
     """
-    if TASK_SECRET and x_task_secret != TASK_SECRET:
+    if not TASK_SECRET:
+        raise HTTPException(
+            status_code=503,
+            detail="TASK_SECRET no configurado: la tarea no puede autenticarse",
+        )
+    if x_task_secret != TASK_SECRET:
         raise HTTPException(status_code=403, detail="Acceso no autorizado")
 
     from app.tasks.daily_sequence import run_daily_sequence

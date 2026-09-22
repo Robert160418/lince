@@ -46,7 +46,7 @@ curl http://localhost:8000/debug
 Respuesta esperada:
 ```json
 {
-  "supabase_url": "https://bpycimognxzipvleqvsu.supabase.co",
+  "supabase_url": "https://TU-PROYECTO.supabase.co",
   "supabase_key_primeros_10": "eyJhbGciOi..."
 }
 ```
