@@ -1,6 +1,6 @@
 import json
 from openai import AsyncOpenAI
-from app.config import OPENAI_API_KEY
+from app.config import OPENAI_API_KEY, SECUENCIA_MAX_EMAILS
 from app.utils.supabase_client import supabase_select, supabase_insert, supabase_update_lead
 
 client = AsyncOpenAI(api_key=OPENAI_API_KEY)
@@ -31,7 +31,7 @@ async def generar_secuencia_emails(place_id: str) -> dict:
     prompt = f"""
 Eres un experto en cold email marketing para agencias de marketing digital en Ecuador y Latinoamérica.
 La agencia se llama NoBo Web (noboweb.com) y ofrece servicios de marketing digital y desarrollo web.
-Genera una secuencia de 5 emails para contactar a este negocio.
+Genera una secuencia de 3 emails para contactar a este negocio.
 
 NEGOCIO: {lead.get('name', 'N/A')}
 SITIO WEB: {lead.get('site', 'No tiene')}
@@ -45,47 +45,28 @@ SERVICIO PRINCIPAL RECOMENDADO: {servicio_principal or 'Marketing digital'}
 SERVICIOS RECOMENDADOS PARA ESTE NEGOCIO:
 {servicios_txt}
 
-Genera 5 emails en JSON. Cada email debe ser conversacional, directo, máximo 120 palabras.
+Genera 3 emails en JSON. Cada email debe ser conversacional, directo, máximo 110 palabras.
 NO uses saludos genéricos. Menciona el nombre del negocio específicamente.
-Firma siempre como parte del equipo de NoBo Web (noboweb.com).
+Firma siempre como Roberto Noboa, de Noboweb (noboweb.com).
 En los emails menciona los servicios recomendados de forma natural, empezando por el servicio principal.
+
+REGLAS DE HONESTIDAD (obligatorias):
+- NO inventes casos de éxito, clientes, testimonios, porcentajes ni cifras de resultados.
+- Solo puedes citar datos que aparecen arriba sobre ESTE negocio.
+- No prometas resultados garantizados.
 
 Formato exacto:
 {{
   "emails": [
-    {{
-      "dia": 1,
-      "asunto": "asunto corto y directo",
-      "cuerpo": "cuerpo del email"
-    }},
-    {{
-      "dia": 2,
-      "asunto": "asunto",
-      "cuerpo": "cuerpo"
-    }},
-    {{
-      "dia": 3,
-      "asunto": "asunto",
-      "cuerpo": "cuerpo"
-    }},
-    {{
-      "dia": 4,
-      "asunto": "asunto",
-      "cuerpo": "cuerpo"
-    }},
-    {{
-      "dia": 5,
-      "asunto": "asunto",
-      "cuerpo": "cuerpo"
-    }}
+    {{"dia": 1, "asunto": "asunto corto y directo", "cuerpo": "cuerpo del email"}},
+    {{"dia": 2, "asunto": "asunto", "cuerpo": "cuerpo"}},
+    {{"dia": 3, "asunto": "asunto", "cuerpo": "cuerpo"}}
   ]
 }}
 
-Día 1: Introducción personalizada — menciona el servicio principal y por qué lo necesitan específicamente
-Día 2: Caso de éxito de negocio similar en Ecuador/LATAM usando uno de los servicios recomendados
-Día 3: Pregunta directa sobre su problema específico + menciona otro servicio complementario
-Día 4: Urgencia suave — lista rápida de 2-3 servicios con beneficio concreto para ellos
-Día 5: Seguimiento final, cierre simple con enlace a noboweb.com
+Email 1: Presentación personalizada. Menciona UN hallazgo concreto de su negocio y ofrece enviarle un diagnóstico gratuito de una página.
+Email 2 (3 días después): Una idea práctica y útil para su negocio que pueda aplicar aunque no nos contrate, más el ofrecimiento del diagnóstico.
+Email 3 (6 días después): Cierre corto y amable: «no le escribo más; si en algún momento le sirve, aquí estamos» con enlace a noboweb.com.
 """
 
     try:
@@ -100,8 +81,8 @@ Día 5: Seguimiento final, cierre simple con enlace a noboweb.com
         print(f"Error OpenAI: {e}")
         return {"error": str(e)}
 
-    if len(emails) < 5:
-        return {"error": "OpenAI no generó 5 emails completos"}
+    if len(emails) < SECUENCIA_MAX_EMAILS:
+        return {"error": f"OpenAI no generó {SECUENCIA_MAX_EMAILS} emails completos"}
 
     # Guardar en tabla emails con estructura correcta (una fila, columnas por día)
     email_data = {
@@ -113,7 +94,7 @@ Día 5: Seguimiento final, cierre simple con enlace a noboweb.com
         "current_email_day": 0,
     }
 
-    for i, email in enumerate(emails[:5], start=1):
+    for i, email in enumerate(emails[:SECUENCIA_MAX_EMAILS], start=1):
         email_data[f"email_{i}_subject"] = email.get("asunto", "")
         email_data[f"email_{i}_body"] = email.get("cuerpo", "")
 

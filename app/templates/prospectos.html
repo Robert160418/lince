@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lince · Prospectos del día</title>
+<style>
+  :root { --ink:#0d1b2e; --mute:#6b7787; --line:#e3e8ef; --cyan:#00aeef; --ok:#178a4c; --bg:#f5f8fb; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, "Segoe UI", Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  header { background: #0a2a5c; color: #fff; padding: 16px; }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 4px 0 0; color: #c9d6e8; font-size: 14px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+  select, button, a.btn { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--ink); text-decoration: none; cursor: pointer; }
+  a.btn.wa { background: #1fa855; color: #fff; border-color: #1fa855; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; }
+  .card h3 { margin: 0; font-size: 16px; }
+  .meta { color: var(--mute); font-size: 13px; }
+  .hall { font-size: 14px; }
+  .acciones { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+  .hecho { opacity: .45; }
+  .vacio { color: var(--mute); padding: 24px 0; }
+  @media (max-width: 640px) { .card { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Prospectos del día</h1>
+  <p>Ordenados por oportunidad. Toca WhatsApp, revisa el mensaje y envíalo tú. Meta: 15–20 por día.</p>
+</header>
+<main>
+  <div class="bar">
+    <select id="lote"><option value="">Cargando lotes…</option></select>
+    <button id="csv">Descargar CSV</button>
+    <a class="btn" href="/">Volver al panel</a>
+  </div>
+  <div id="lista"></div>
+</main>
+<script src="/static/auth.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hechos = () => { try { return JSON.parse(localStorage.getItem('lince_contactados') || '{}'); } catch (e) { return {}; } };
+const marcar = (id) => { const h = hechos(); h[id] = Date.now(); try { localStorage.setItem('lince_contactados', JSON.stringify(h)); } catch (e) {} };
+
+async function cargarLotes() {
+  const r = await fetch('/lotes');
+  const lotes = r.ok ? await r.json() : [];
+  $('#lote').innerHTML = lotes.length
+    ? lotes.map((l) => `<option value="${esc(l.lote_id)}">${esc(l.query || l.lote_id)} (${l.count})</option>`).join('')
+    : '<option value="">No hay lotes todavía</option>';
+  if (lotes.length) cargar();
+}
+
+async function cargar() {
+  const lote = $('#lote').value;
+  if (!lote) return;
+  $('#lista').innerHTML = '<p class="vacio">Cargando…</p>';
+  const r = await fetch('/api/prospectos?limite=40&lote_id=' + encodeURIComponent(lote));
+  const filas = r.ok ? await r.json() : [];
+  const h = hechos();
+  $('#lista').innerHTML = filas.length ? filas.map((f) => `
+    <div class="card ${h[f.place_id] ? 'hecho' : ''}" id="c-${esc(f.place_id)}">
+      <div>
+        <h3>${esc(f.negocio)}</h3>
+        <div class="meta">Puesto ${esc(f.posicion_mapa ?? '—')} · ${esc(f.calificacion ?? '—')}★ · ${esc(f.resenas ?? '—')} reseñas · ${f.web ? 'con web' : 'sin web'} · ${esc(f.canal)} ${esc(f.telefono || '')}</div>
+        <div class="hall">${esc(f.hallazgo || 'Sin hallazgo fuerte: prioridad baja.')}</div>
+      </div>
+      <div class="acciones">
+        ${f.whatsapp ? `<a class="btn wa" target="_blank" rel="noopener" href="${esc(f.whatsapp)}" data-id="${esc(f.place_id)}">WhatsApp</a>` : ''}
+        <button data-aud="${esc(f.place_id)}" data-nombre="${esc(f.negocio)}">Auditoría (JSON)</button>
+      </div>
+    </div>`).join('') : '<p class="vacio">Este lote no tiene prospectos.</p>';
+}
+
+document.addEventListener('click', async (e) => {
+  const wa = e.target.closest('a.wa');
+  if (wa) { marcar(wa.dataset.id); document.getElementById('c-' + wa.dataset.id)?.classList.add('hecho'); }
+  const aud = e.target.closest('button[data-aud]');
+  if (aud) {
+    const r = await fetch('/api/prospectos/' + encodeURIComponent(aud.dataset.aud) + '/auditoria');
+    if (!r.ok) return alert('No se pudo generar la auditoría');
+    const blob = new Blob([JSON.stringify(await r.json(), null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (aud.dataset.nombre || 'auditoria').toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.json';
+    a.click();
+  }
+});
+
+$('#lote').addEventListener('change', cargar);
+$('#csv').addEventListener('click', async () => {
+  const lote = $('#lote').value;
+  if (!lote) return;
+  const r = await fetch('/api/prospectos.csv?lote_id=' + encodeURIComponent(lote));
+  if (!r.ok) return alert('No se pudo descargar');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(await r.blob());
+  a.download = 'prospectos_' + lote + '.csv';
+  a.click();
+});
+cargarLotes();
+</script>
+</body>
+</html>

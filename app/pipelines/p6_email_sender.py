@@ -1,11 +1,15 @@
 import requests
 from datetime import datetime, timezone
-from app.config import BREVO_API_KEY
+from app.config import BREVO_API_KEY, OUTREACH_FROM_EMAIL, OUTREACH_FROM_NAME, SECUENCIA_MAX_EMAILS
 from app.utils.supabase_client import supabase_select, supabase_update_lead
 
 BREVO_URL = "https://api.brevo.com/v3/smtp/email"
-FROM_EMAIL = "roberto@noboweb.com"
-FROM_NAME = "Roberto | Lince"
+FROM_EMAIL = OUTREACH_FROM_EMAIL
+FROM_NAME = OUTREACH_FROM_NAME
+
+# Toda prospección lleva una forma clara de darse de baja: en el texto y en la
+# cabecera List-Unsubscribe (Gmail muestra el botón «Cancelar suscripción»).
+PIE_BAJA = "\n\n—\nSi prefiere no recibir más correos, responda «BAJA» y no le volveré a escribir."
 
 
 def _enviar_brevo(to_email: str, to_name: str, asunto: str, cuerpo: str) -> dict:
@@ -19,7 +23,8 @@ def _enviar_brevo(to_email: str, to_name: str, asunto: str, cuerpo: str) -> dict
             "sender": {"name": FROM_NAME, "email": FROM_EMAIL},
             "to": [{"email": to_email, "name": to_name}],
             "subject": asunto,
-            "textContent": cuerpo
+            "textContent": cuerpo + PIE_BAJA,
+            "headers": {"List-Unsubscribe": f"<mailto:{FROM_EMAIL}?subject=BAJA>"},
         },
         timeout=15
     )
@@ -45,8 +50,8 @@ async def ejecutar_secuencia(place_id: str) -> dict:
     current_day = row.get("current_email_day", 0)
     next_day = current_day + 1
 
-    if next_day > 5:
-        return {"status": "completada", "mensaje": "Secuencia de 5 emails completada"}
+    if next_day > SECUENCIA_MAX_EMAILS:
+        return {"status": "completada", "mensaje": f"Secuencia de {SECUENCIA_MAX_EMAILS} emails completada"}
 
     # Obtener asunto y cuerpo del día correspondiente
     asunto = row.get(f"email_{next_day}_subject")

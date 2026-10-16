@@ -26,6 +26,24 @@ if not GOOGLE_SHEETS_CREDENTIALS and GOOGLE_SHEETS_CREDENTIALS_PATH:
 
 TASK_SECRET = os.getenv("TASK_SECRET", "")
 
+# Token de acceso al panel y a la API. Sin él, todas las rutas (salvo /health)
+# responden 503: Lince nunca queda abierto a internet por olvido.
+# Generar con: openssl rand -hex 24
+LINCE_API_TOKEN = os.getenv("LINCE_API_TOKEN", "")
+
+# Remitente de la prospección. Recomendado: un dominio SEPARADO de noboweb.com
+# (ej. hola@noboweb-mail.com) para no arriesgar la reputación del correo principal.
+OUTREACH_FROM_EMAIL = os.getenv("OUTREACH_FROM_EMAIL", "roberto@noboweb.com")
+OUTREACH_FROM_NAME = os.getenv("OUTREACH_FROM_NAME", "Roberto Noboa | Noboweb")
+
+# Secuencia de correo: pocos toques y espaciados. Cada valor es el número de
+# días que se espera DESPUÉS del correo anterior (el primero sale al ejecutar P6).
+SECUENCIA_MAX_EMAILS = 3
+SECUENCIA_DIAS_ESPERA = {2: 3, 3: 6}  # día 1 → +3 días → correo 2 → +6 días → correo 3
+
+# Número de WhatsApp de Noboweb (para los mensajes de prospección)
+NOBOWEB_WHATSAPP = os.getenv("NOBOWEB_WHATSAPP", "593984985373")
+
 # Puente hacia portal.noboweb.com — sincroniza leads calificados (P4) al CRM
 # del portal. Si quedan vacíos, la sincronización simplemente se omite
 # (ver app/utils/portal_bridge.py) y Lince sigue funcionando normal.

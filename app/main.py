@@ -6,13 +6,16 @@ from typing import Optional
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-from fastapi import FastAPI, BackgroundTasks, Header, HTTPException
+import hmac
+
+from fastapi import FastAPI, BackgroundTasks, Header, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from app.config import SUPABASE_URL, SUPABASE_KEY, TASK_SECRET
+from app.config import SUPABASE_URL, LINCE_API_TOKEN, TASK_SECRET
 from app.utils.supabase_client import supabase_select
 from app.pipelines.p1_google_maps import scrape_google_maps, procesar_y_guardar_leads
 from app.utils.batch_processor import process_lote
@@ -28,10 +31,31 @@ app = FastAPI(title="Lince API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rutas que no exigen token: la página del panel (pide el token en el
+# navegador), sus estáticos, el chequeo de salud y la tarea del cron, que
+# tiene su propio secreto (TASK_SECRET).
+RUTAS_PUBLICAS = {"/", "/prospectos", "/health", "/tasks/daily-sequence"}
+
+
+def _token_valido(recibido: str) -> bool:
+    return bool(LINCE_API_TOKEN) and hmac.compare_digest(recibido or "", LINCE_API_TOKEN)
+
+
+@app.middleware("http")
+async def exigir_token(request: Request, call_next):
+    ruta = request.url.path
+    if request.method == "OPTIONS" or ruta in RUTAS_PUBLICAS or ruta.startswith("/static/"):
+        return await call_next(request)
+    if not LINCE_API_TOKEN:
+        return JSONResponse({"detail": "Lince sin configurar: falta LINCE_API_TOKEN en .env"}, status_code=503)
+    if not _token_valido(request.headers.get("x-lince-token", "")):
+        return JSONResponse({"detail": "Token inválido o ausente"}, status_code=401)
+    return await call_next(request)
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
@@ -109,23 +133,6 @@ async def sheets_ping():
         return {"status": "ok", "sheet_url": url}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
-
-
-@app.get("/debug")
-async def debug():
-    return {
-        "supabase_url": SUPABASE_URL,
-        "supabase_key_primeros_10": "configurada" if SUPABASE_KEY else None,
-    }
-
-
-@app.get("/test-db")
-async def test_db():
-    try:
-        data = await supabase_select("leads")
-        return {"tablas": "ok", "datos": data}
-    except Exception as e:
-        return {"error": str(e)}
 
 
 # ----- Pipelines -----
@@ -260,6 +267,51 @@ async def ejecutar_secuencia_completa(body: SequenceBody):
     return salida
 
 
+# ── Prospección uno a uno (WhatsApp) y auditoría express ──────────────────────
+
+async def _lote(lote_id: str) -> list:
+    leads = await supabase_select("leads", {"lote_id": f"eq.{lote_id}"})
+    return leads if isinstance(leads, list) else []
+
+
+@app.get("/prospectos", include_in_schema=False)
+async def pagina_prospectos():
+    return FileResponse(BASE_DIR / "templates" / "prospectos.html", media_type="text/html; charset=utf-8")
+
+
+@app.get("/api/prospectos")
+async def api_prospectos(lote_id: str, limite: int = 20):
+    from app.utils.prospeccion import lista_del_dia
+    return lista_del_dia(await _lote(lote_id), limite=limite)
+
+
+@app.get("/api/prospectos.csv")
+async def api_prospectos_csv(lote_id: str, limite: int = 50):
+    import csv, io
+    from fastapi.responses import Response
+    from app.utils.prospeccion import lista_del_dia
+    filas = lista_del_dia(await _lote(lote_id), limite=limite)
+    buf = io.StringIO()
+    campos = ["negocio", "canal", "telefono", "hallazgo", "posicion_mapa", "calificacion", "resenas", "web", "whatsapp", "mensaje"]
+    w = csv.DictWriter(buf, fieldnames=campos + ["estado"], extrasaction="ignore")
+    w.writeheader()
+    for f in filas:
+        w.writerow({**f, "estado": ""})
+    return Response("\ufeff" + buf.getvalue(), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="prospectos_{lote_id}.csv"'})
+
+
+@app.get("/api/prospectos/{place_id}/auditoria")
+async def api_auditoria(place_id: str):
+    from app.utils.prospeccion import auditoria_json
+    leads = await supabase_select("leads", {"place_id": f"eq.{place_id}"})
+    if not leads or not isinstance(leads, list):
+        raise HTTPException(status_code=404, detail="Lead no encontrado")
+    lead = leads[0]
+    lote = await _lote(lead.get("lote_id", "")) if lead.get("lote_id") else [lead]
+    return auditoria_json(lead, lote)
+
+
 # ── Tareas programadas ────────────────────────────────────────────────────────
 
 @app.post("/tasks/daily-sequence")
@@ -270,7 +322,9 @@ async def tarea_secuencia_diaria(x_task_secret: str = Header(default="")):
 
     Header requerido: X-Task-Secret: <valor de TASK_SECRET en .env>
     """
-    if TASK_SECRET and x_task_secret != TASK_SECRET:
+    if not TASK_SECRET:
+        raise HTTPException(status_code=503, detail="Falta TASK_SECRET en .env")
+    if not hmac.compare_digest(x_task_secret or "", TASK_SECRET):
         raise HTTPException(status_code=403, detail="Acceso no autorizado")
 
     from app.tasks.daily_sequence import run_daily_sequence
