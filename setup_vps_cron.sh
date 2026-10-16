@@ -1,65 +1,63 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────
-# setup_vps_cron.sh  — Correr UNA SOLA VEZ en el VPS
-# Configura la secuencia automática de emails Días 2-5
+# setup_vps_cron.sh — correr en el VPS (se puede repetir sin riesgo)
+#   bash setup_vps_cron.sh            # usa /opt/lince
+#   LINCE_DIR=/opt/lince-v2 bash setup_vps_cron.sh
+#
+# - Genera claves aleatorias para TASK_SECRET y LINCE_API_TOKEN si faltan
+#   o si siguen con el valor viejo que quedó publicado en el repositorio.
+# - El cron lee la clave del .env en cada ejecución: nunca se escribe en
+#   un archivo del repositorio.
 # ─────────────────────────────────────────────────────────
 set -e
 
-echo ""
-echo "======================================================"
-echo "  Lince — Configurando secuencia diaria de emails"
-echo "======================================================"
+LINCE_DIR="${LINCE_DIR:-/opt/lince}"
+ENV_FILE="${ENV_FILE:-$LINCE_DIR/.env}"
+LINCE_URL="${LINCE_URL:-https://lince.noboweb.com}"
+CLAVE_VIEJA="lince-cron-2026"
 
-# 1. Traer código nuevo de GitHub
-echo ""
-echo "1/5  git pull..."
-cd /opt/lince
+echo "== Lince — configuración del cron ($LINCE_DIR) =="
+
+cd "$LINCE_DIR"
 git pull origin main
+touch "$ENV_FILE"
+chmod 600 "$ENV_FILE"
 
-# 2. Agregar TASK_SECRET al .env (solo si no existe)
-echo ""
-echo "2/5  Configurando TASK_SECRET en .env..."
-if grep -q "TASK_SECRET" .env 2>/dev/null; then
-    echo "     Ya existe TASK_SECRET en .env — sin cambios"
-else
-    echo "TASK_SECRET=lince-cron-2026" >> .env
-    echo "     TASK_SECRET agregado"
-fi
+asegurar_clave () {
+    local nombre="$1"
+    local actual
+    actual="$(grep -E "^${nombre}=" "$ENV_FILE" | tail -1 | cut -d= -f2- || true)"
+    if [ -z "$actual" ] || [ "$actual" = "$CLAVE_VIEJA" ]; then
+        local nueva
+        nueva="$(openssl rand -hex 24)"
+        sed -i "/^${nombre}=/d" "$ENV_FILE"
+        echo "${nombre}=${nueva}" >> "$ENV_FILE"
+        echo "  ${nombre}: generada (nueva)"
+        if [ "$nombre" = "LINCE_API_TOKEN" ]; then
+            echo "  >> Guarda este token para entrar al panel: ${nueva}"
+        fi
+    else
+        echo "  ${nombre}: ya configurada"
+    fi
+}
 
-# 3. Crear script del cron
-echo ""
-echo "3/5  Creando /opt/lince/run_daily_sequence.sh..."
-cat > /opt/lince/run_daily_sequence.sh << 'EOF'
+asegurar_clave TASK_SECRET
+asegurar_clave LINCE_API_TOKEN
+
+cat > "$LINCE_DIR/run_daily_sequence.sh" << EOF
 #!/bin/bash
-# Cron diario — envía emails de secuencia Días 2-5
-DATE=$(date '+%Y-%m-%d %H:%M:%S')
-echo "[$DATE] Ejecutando secuencia diaria..." >> /var/log/lince-sequence.log
-curl -s -X POST https://lince.noboweb.com/tasks/daily-sequence \
-     -H "X-Task-Secret: lince-cron-2026" \
-     -H "Content-Type: application/json" \
-     >> /var/log/lince-sequence.log 2>&1
+# Cron diario — envía el siguiente correo de las secuencias activas
+SECRET="\$(grep -E '^TASK_SECRET=' "$ENV_FILE" | tail -1 | cut -d= -f2-)"
+echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Secuencia diaria" >> /var/log/lince-sequence.log
+curl -s -X POST "$LINCE_URL/tasks/daily-sequence" -H "X-Task-Secret: \$SECRET" >> /var/log/lince-sequence.log 2>&1
 echo "" >> /var/log/lince-sequence.log
 EOF
-chmod +x /opt/lince/run_daily_sequence.sh
-echo "     Script creado y ejecutable"
+chmod 700 "$LINCE_DIR/run_daily_sequence.sh"
 
-# 4. Registrar cron a las 9:00am (evita duplicados)
-echo ""
-echo "4/5  Registrando cron diario a las 9:00am..."
-(crontab -l 2>/dev/null | grep -v "run_daily_sequence"; echo "0 9 * * * /opt/lince/run_daily_sequence.sh") | crontab -
-echo "     Cron registrado:"
-crontab -l
+(crontab -l 2>/dev/null | grep -v "run_daily_sequence"; echo "0 9 * * * $LINCE_DIR/run_daily_sequence.sh") | crontab -
+echo "  Cron diario 9:00 registrado"
 
-# 5. Reiniciar servicio Lince
-echo ""
-echo "5/5  Reiniciando servicio lince..."
 systemctl restart lince
 sleep 2
-systemctl status lince --no-pager | head -20
-
-echo ""
-echo "======================================================"
-echo "  ✅ Configuración completada"
-echo "  El cron corre cada día a las 9:00am del servidor"
-echo "  Logs en: /var/log/lince-sequence.log"
-echo "======================================================"
+systemctl status lince --no-pager | head -10
+echo "== Listo. Logs: /var/log/lince-sequence.log =="

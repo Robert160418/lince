@@ -14,11 +14,38 @@ except Exception:
     async def create_lote_sheet(*a, **k): return None
     async def add_lead_to_sheet(*a, **k): return None
 
+# Columnas añadidas por migrations/003_leads_reviews_position.sql
+COLUMNAS_NUEVAS = ("reviews_count", "map_position")
+
+
 def _make_lote_id(query: str) -> str:
     """Genera un identificador único para el lote: query_YYYYMMDD_HHMM"""
     safe = re.sub(r'[^a-zA-Z0-9À-ɏ]', '_', query.strip())[:35]
     ts = datetime.now().strftime('%Y%m%d_%H%M')
     return f"{safe}_{ts}"
+
+def _extract_reviews_count(page) -> int | None:
+    """Cantidad de reseñas desde los aria-label («123 reseñas» / «1.234 reviews»)."""
+    try:
+        txt = page.evaluate("""() => {
+            for (const el of document.querySelectorAll('[aria-label]')) {
+                const m = (el.getAttribute('aria-label') || '').match(/([\\d.,]+)\\s*(reseñas|opiniones|reviews)/i);
+                if (m) return m[1];
+            }
+            return null;
+        }""")
+        return parse_reviews_count(txt)
+    except Exception:
+        return None
+
+
+def parse_reviews_count(txt) -> int | None:
+    """«1.234» / «1,234» / «87» → entero. Separadores de miles en cualquier formato."""
+    if not txt:
+        return None
+    digitos = re.sub(r"[^0-9]", "", str(txt))
+    return int(digitos) if digitos else None
+
 
 def _extract_rating(page) -> float | None:
     """Intenta extraer el rating usando múltiples estrategias robustas."""
@@ -103,6 +130,7 @@ def _scrape_sync(query: str, limit: int) -> list:
         listings = page.query_selector_all('a[href*="/maps/place/"]')
         seen = set()
 
+        posicion = 0
         for listing in listings[:limit]:
             try:
                 nombre = listing.get_attribute("aria-label")
@@ -110,6 +138,7 @@ def _scrape_sync(query: str, limit: int) -> list:
                 if not nombre or href in seen:
                     continue
                 seen.add(href)
+                posicion += 1  # orden en el mapa para esta búsqueda
 
                 detalle = browser.new_page()
                 detalle.goto(href, wait_until="domcontentloaded", timeout=60000)
@@ -117,6 +146,7 @@ def _scrape_sync(query: str, limit: int) -> list:
 
                 # Rating — estrategia multi-selector
                 rating = _extract_rating(detalle)
+                reviews_count = _extract_reviews_count(detalle)
 
                 # Teléfono
                 phone_el = detalle.query_selector('button[data-item-id*="phone"]')
@@ -139,6 +169,8 @@ def _scrape_sync(query: str, limit: int) -> list:
                     "place_id": place_id,
                     "name": nombre,
                     "rating": rating,
+                    "reviews_count": reviews_count,
+                    "map_position": posicion,
                     "phone": phone,
                     "site": website,
                     "full_address": address,
@@ -176,6 +208,9 @@ async def procesar_y_guardar_leads(resultados: list, query: str = "") -> dict:
             try:
                 lead_data = {**negocio, "lote_id": lote_id}
                 resp = await supabase_insert("leads", lead_data)
+                if resp.get("status") not in (200, 201) and any(k in lead_data for k in COLUMNAS_NUEVAS):
+                    # La base aún no tiene la migración 003: se guarda sin los campos nuevos.
+                    resp = await supabase_insert("leads", {k: v for k, v in lead_data.items() if k not in COLUMNAS_NUEVAS})
                 if resp.get("status") in (200, 201):
                     guardados += 1
                     # Agregar fila al Sheet

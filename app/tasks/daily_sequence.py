@@ -1,9 +1,9 @@
 """
 daily_sequence.py
 ─────────────────
-Tarea diaria: envía el siguiente email de la secuencia a los leads que
-llevan ≥ HORAS_ENTRE_EMAILS desde su último envío y aún no completaron
-los 5 días.
+Tarea diaria: envía el siguiente email de la secuencia a los leads que ya
+cumplieron la espera de esa etapa (SECUENCIA_DIAS_ESPERA) y aún no completaron
+los SECUENCIA_MAX_EMAILS correos.
 
 Se invoca desde el endpoint POST /tasks/daily-sequence (protegido con
 X-Task-Secret) que a su vez es llamado por el cron del VPS cada mañana.
@@ -12,6 +12,7 @@ X-Task-Secret) que a su vez es llamado por el cron del VPS cada mañana.
 import asyncio
 from datetime import datetime, timezone
 
+from app.config import SECUENCIA_DIAS_ESPERA, SECUENCIA_MAX_EMAILS
 from app.utils.supabase_client import supabase_select
 from app.pipelines.p6_email_sender import ejecutar_secuencia
 
@@ -23,14 +24,16 @@ except Exception:
     async def update_lead_in_sheet(*a, **k): return None
 
 # ── Configuración ─────────────────────────────────────────────────────────────
-HORAS_ENTRE_EMAILS = 24   # mínimo de horas entre emails consecutivos
+def horas_de_espera(siguiente_dia: int) -> float:
+    """Horas mínimas entre el correo anterior y el correo `siguiente_dia`."""
+    return SECUENCIA_DIAS_ESPERA.get(siguiente_dia, 3) * 24
 
 
 # ── Lógica principal ──────────────────────────────────────────────────────────
 async def run_daily_sequence() -> dict:
     """
     Recorre la tabla `emails` buscando leads con secuencia activa y envía
-    el siguiente email cuando han pasado al menos HORAS_ENTRE_EMAILS.
+    el siguiente email cuando ya se cumplió la espera de esa etapa.
 
     Retorna un resumen con contadores y lista de resultados por lead.
     """
@@ -59,7 +62,7 @@ async def run_daily_sequence() -> dict:
         current_day = row.get("current_email_day", 0)
 
         # ── Filtros de salida rápida ──────────────────────────────────────────
-        if current_day >= 5:
+        if current_day >= SECUENCIA_MAX_EMAILS:
             continue  # secuencia ya completada
 
         if row.get("sequence_stopped") or row.get("replied"):
@@ -68,7 +71,7 @@ async def run_daily_sequence() -> dict:
         if not row.get("recipient_email"):
             continue  # sin email destino — no se puede enviar
 
-        # ── Verificar timing: ≥ HORAS_ENTRE_EMAILS desde el último envío ─────
+        # ── Verificar timing: espera de la etapa desde el último envío ───────
         last_sent_field = f"sent_at_day{current_day}"
         last_sent_str   = row.get(last_sent_field)
 
@@ -88,8 +91,9 @@ async def run_daily_sequence() -> dict:
 
         horas_desde_ultimo = (now - last_sent).total_seconds() / 3600
 
-        if horas_desde_ultimo < HORAS_ENTRE_EMAILS:
-            horas_restantes = HORAS_ENTRE_EMAILS - horas_desde_ultimo
+        espera = horas_de_espera(current_day + 1)
+        if horas_desde_ultimo < espera:
+            horas_restantes = espera - horas_desde_ultimo
             print(f"  ⏳ {company}: faltan {horas_restantes:.1f}h para el próximo email")
             omitidos += 1
             continue
@@ -134,7 +138,7 @@ async def run_daily_sequence() -> dict:
                     lote_id = leads_data[0].get("lote_id", "")
                     if lote_id:
                         await update_lead_in_sheet(lote_id, place_id, {
-                            "P6 Estado":   f"✅ Día {dia_enviado}/5 enviado",
+                            "P6 Estado":   f"✅ Correo {dia_enviado}/{SECUENCIA_MAX_EMAILS} enviado",
                             "Fecha Envío": now_str,
                             "Estado":      f"✅ Secuencia día {dia_enviado}",
                         })
@@ -155,7 +159,7 @@ async def run_daily_sequence() -> dict:
     print(f"\n{'─'*55}")
     print(f"  Procesados : {len(rows)}")
     print(f"  Enviados   : {enviados}")
-    print(f"  Omitidos   : {omitidos}  (no cumplían 24h aún)")
+    print(f"  Omitidos   : {omitidos}  (aún en espera)")
     print(f"  Errores    : {errores}")
     print(f"{'='*55}\n")
 

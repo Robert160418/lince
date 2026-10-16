@@ -1,7 +1,11 @@
 import pytest
 import asyncio
 from pathlib import Path
+import os
 import sys
+
+# Las pruebas unitarias no llaman a OpenAI, pero el cliente exige una clave al importarse.
+os.environ.setdefault("OPENAI_API_KEY", "sk-test")
 
 # Agregar el directorio raíz al path
 sys.path.insert(0, str(Path(__file__).parent.parent))
